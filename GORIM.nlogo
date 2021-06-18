@@ -13,24 +13,45 @@ breed [ prefeitos prefeito ]
 ;;breed [ vereadores vereador]
 
 ;; Cria as variáveis
-agricultores-own [ id saldo poluicao ]
-empresarios-own [ setor produtos poluicao]
+agricultores-own [ id parcelas saldo producao poluicao  ]
+empresarios-own [ setor produtos producao saldo poluicao ]
 
-globals [posicao-inicial global-polution simulation-round produtividade imposto multa]
+globals [global-polution simulation-round posicao-inicial posicao-parcelas sementes setores sementes-imagens
+  tabela-produtividade tabela-poluicao-agricultor tabela-poluicao-empresario tabela-multa ]
 
 to setup
   clear-all
+  print-log (word "\n\n----------- Simulação: " date-and-time  " -----------")
   setup-inicial
   cria-area
   cria-agricultores
   cria-empresarios
   cria-fiscais
   cria-prefeito
+  print-log "\nSETUP: Criação do Ambiente e dos Agentes... Feito! \n"
   reset-ticks
 end
 
+to print-log [text]
+  file-open "gorim-log.txt"
+  file-print text
+  file-close
+end
+
+to write-log [text]
+  file-open "gorim-log.txt"
+  file-write text
+  file-close
+end
+
+to show-log [text]
+  file-open "gorim-log.txt"
+  file-show text
+  file-close
+end
+
 to setup-inicial
-  ;; Define a posição inicial dos agricultores
+  ;; define a posição inicial dos agricultores
   set posicao-inicial table:make
   table:put posicao-inicial "a0" [-25 -6]
   table:put posicao-inicial "a1" [0 -6]
@@ -39,7 +60,7 @@ to setup-inicial
   table:put posicao-inicial "a4" [0 -25]
   table:put posicao-inicial "a5" [25 -25]
 
-  ;; Define a posição inicial das fazendas
+  ;; define a posição inicial das fazendas
   table:put posicao-inicial "f0" [-25 -15]
   table:put posicao-inicial "f1" [0 -15]
   table:put posicao-inicial "f2" [25 -15]
@@ -47,30 +68,171 @@ to setup-inicial
   table:put posicao-inicial "f4" [0 -34]
   table:put posicao-inicial "f5" [25 -34]
 
-  ;; Define a posição inicial dos empresarios
+  ;; define a posição inicial dos empresarios
   table:put posicao-inicial "e0" [-23 21] ;; sementes
   table:put posicao-inicial "e1" [23 21] ;; agrotóxico
   table:put posicao-inicial "e2" [-28 34] ;; fertilizante
   table:put posicao-inicial "e3" [28 34] ;; maquinas
 
-  ;; Define variáveis globais
-  set global-polution 30
-  set simulation-round 1
+  ;; define a posição das parcelas de terra dos agricultores
+  set posicao-parcelas table:make
+  table:put posicao-parcelas "a0p0" [51 374]
+  table:put posicao-parcelas "a0p1" [96 374]
+  table:put posicao-parcelas "a0p2" [141 374]
+  table:put posicao-parcelas "a0p3" [51 419]
+  table:put posicao-parcelas "a0p4" [96 419]
+  table:put posicao-parcelas "a0p5" [141 419]
 
-  ;; Define
+  table:put posicao-parcelas "a1p0" [239 374]
+  table:put posicao-parcelas "a1p1" [284 374]
+  table:put posicao-parcelas "a1p2" [329 374]
+  table:put posicao-parcelas "a1p3" [239 419]
+  table:put posicao-parcelas "a1p4" [284 419]
+  table:put posicao-parcelas "a1p5" [329 419]
+
+  table:put posicao-parcelas "a2p0" [426 374]
+  table:put posicao-parcelas "a2p1" [471 374]
+  table:put posicao-parcelas "a2p2" [516 374]
+  table:put posicao-parcelas "a2p3" [426 419]
+  table:put posicao-parcelas "a2p4" [471 419]
+  table:put posicao-parcelas "a2p5" [516 419]
+
+  table:put posicao-parcelas "a3p0" [51 516]
+  table:put posicao-parcelas "a3p1" [96 516]
+  table:put posicao-parcelas "a3p2" [141 516]
+  table:put posicao-parcelas "a3p3" [51 561]
+  table:put posicao-parcelas "a3p4" [96 561]
+  table:put posicao-parcelas "a3p5" [141 561]
+
+  table:put posicao-parcelas "a4p0" [239 516]
+  table:put posicao-parcelas "a4p1" [284 516]
+  table:put posicao-parcelas "a4p2" [329 516]
+  table:put posicao-parcelas "a4p3" [239 561]
+  table:put posicao-parcelas "a4p4" [284 561]
+  table:put posicao-parcelas "a4p5" [329 561]
+
+  table:put posicao-parcelas "a5p0" [426 516]
+  table:put posicao-parcelas "a5p1" [471 516]
+  table:put posicao-parcelas "a5p2" [516 516]
+  table:put posicao-parcelas "a5p3" [426 561]
+  table:put posicao-parcelas "a5p4" [471 561]
+  table:put posicao-parcelas "a5p5" [516 561]
+
+  ;; define variáveis globais
+  set global-polution 30
+  set simulation-round 0
+  set sementes ["hortalica" "arroz" "soja"]
+  set sementes-imagens ["hortalica_20.png" "arroz_20.jpg" "soja_20.jpg"]
+
+  ;; setores
+  set setores table:make
+  table:put setores "s" "sementes"
+  table:put setores "a" "agrotoxicos"
+  table:put setores "f" "fertilizantes"
+  table:put setores "m" "maquinas"
+
+  ;; tabela de produtividade
+  set tabela-produtividade table:make
+  table:put tabela-produtividade "0---" 10 ;; hortaliça
+  table:put tabela-produtividade "1---" 10 ;; arroz
+  table:put tabela-produtividade "2---" 10 ;; soja
+
+  table:put tabela-produtividade "00--" 30  ;; hortaliça + agrotóxico comum
+  table:put tabela-produtividade "01--" 60  ;; hortaliça + agrotóxico premium
+  table:put tabela-produtividade "02--" 100 ;; hortaliça + agrotóxico super premium
+
+  table:put tabela-produtividade "0-0-" 20 ;; hortaliça + fertilizante comum
+  table:put tabela-produtividade "0-1-" 30 ;; hortaliça + fertilizante premium
+  table:put tabela-produtividade "0-2-" 40 ;; hortaliça + fertilizante super premium
+
+  table:put tabela-produtividade "000-" 60 ;; hortaliça + agrotóxico comum + fertilizante comum
+  table:put tabela-produtividade "001-" 90 ;; hortaliça + agrotóxico comum + fertilizante premium
+  table:put tabela-produtividade "002-" 120 ;; hortaliça + agrotóxico comum + fertilizante super premium
+  table:put tabela-produtividade "010-" 120 ;; hortaliça + agrotóxico premium + fertilizante comum
+  table:put tabela-produtividade "011-" 180 ;; hortaliça + agrotóxico premium + fertilizante premium
+  table:put tabela-produtividade "012-" 240 ;; hortaliça + agrotóxico premium + fertilizante super premium
+  table:put tabela-produtividade "020-" 200 ;; hortaliça + agrotóxico super premium + fertilizante comum
+  table:put tabela-produtividade "021-" 300 ;; hortaliça + agrotóxico super premium + fertilizante premium
+  table:put tabela-produtividade "022-" 400 ;; hortaliça + agrotóxico super premium + fertilizante super premium
+
+  table:put tabela-produtividade "0--0" 30 ;; hortaliça + pacote-maquina 1
+  table:put tabela-produtividade "0--1" 60 ;; hortaliça + pacote-maquina 2
+  table:put tabela-produtividade "0--2" 100 ;; hortaliça + pacote-maquina 3
+  table:put tabela-produtividade "0--3" table:get tabela-produtividade "0---" ;; hortaliça + pulverizador
+
+  table:put tabela-produtividade "0-00" 60 ;; hortaliça + fertilizante comum + pacote-maquina 1
+  table:put tabela-produtividade "0-01" 120 ;; hortaliça + fertilizante comum + pacote-maquina 2
+  table:put tabela-produtividade "0-02" 200 ;; hortaliça + fertilizante comum + pacote-maquina 3
+  table:put tabela-produtividade "0-03" table:get tabela-produtividade "0-0-" ;; hortaliça + fertilizante comum + pulverizador
+
+  table:put tabela-produtividade "0-10" 90 ;; hortaliça + fertilizante premium + pacote-maquina 1
+  table:put tabela-produtividade "0-11" 180 ;; hortaliça + fertilizante premium + pacote-maquina 2
+  table:put tabela-produtividade "0-12" 300 ;; hortaliça + fertilizante premium + pacote-maquina 3
+  table:put tabela-produtividade "0-13" table:get tabela-produtividade "0-1-" ;; hortaliça + fertilizante premium + pulverizador
+
+  table:put tabela-produtividade "0-20" 120 ;; hortaliça + fertilizante super premium + pacote-maquina 1
+  table:put tabela-produtividade "0-21" 240 ;; hortaliça + fertilizante super premium + pacote-maquina 2
+  table:put tabela-produtividade "0-22" 400 ;; hortaliça + fertilizante super premium + pacote-maquina 3
+  table:put tabela-produtividade "0-23" table:get tabela-produtividade "0-2-" ;; hortaliça + fertilizante super premium + pulverizador
+
+  ;; se for arroz + agrotóxico -> duplica (2x) a quantidade final de produção
+  ;; se for soja + agrotóxico -> triplica (3x) a quantidade final de produção
+  ;; a tabela serve para todos os tipos de sementes, não importa se é hortaliça, arroz ou soja
+  ;; não é possível comprar agrotóxico junto com máquinas
+
+  ;; define a tabela de poluicao dos agricultores (poluicao por parcela de terra)
+  ;; a poluição é gerada com o plantio de arroz, soja e hortaliça e com o uso de agrotóxico
+  set tabela-poluicao-agricultor table:make
+  table:put tabela-poluicao-agricultor "0-" 10 ;; hortaliça
+  table:put tabela-poluicao-agricultor "1-" 20 ;; arroz
+  table:put tabela-poluicao-agricultor "2-" 30 ;; soja
+
+  table:put tabela-poluicao-agricultor "00" 30 ;; hortaliça + agrotóxico super premium
+  table:put tabela-poluicao-agricultor "01" 60 ;; hortaliça + agrotóxico premium
+  table:put tabela-poluicao-agricultor "02" 100 ;; hortaliça + agrotóxico comum
+
+  table:put tabela-poluicao-agricultor "10" 60 ;; arroz + agrotóxico super premium
+  table:put tabela-poluicao-agricultor "11" 120 ;; arroz + agrotóxico premium
+  table:put tabela-poluicao-agricultor "12" 200 ;; arroz + agrotóxico comum
+
+  table:put tabela-poluicao-agricultor "20" 90 ;; soja + agrotóxico super premium
+  table:put tabela-poluicao-agricultor "21" 180 ;; soja + agrotóxico premium
+  table:put tabela-poluicao-agricultor "22" 300 ;; soja + agrotóxico comum
+
+  ;; define a tabela de poluicao dos empresarios
+  ;; poluição é gerada após a venda dos produtos
+  set tabela-poluicao-empresario table:make
+  table:put tabela-poluicao-empresario "s0" 1 ;; empresario semente hortaliça
+  table:put tabela-poluicao-empresario "s1" 2 ;; empresario semente arroz
+  table:put tabela-poluicao-empresario "s2" 3 ;; empresario semente soja
+
+  table:put tabela-poluicao-empresario "a0" 3 ;; empresario agrotóxico comum
+  table:put tabela-poluicao-empresario "a1" 2 ;; empresario agrotóxico premium
+  table:put tabela-poluicao-empresario "a2" 1 ;; empresario agrotóxico super premium
+
+  table:put tabela-poluicao-empresario "f0" 9 ;; empresario fertilizante comum
+  table:put tabela-poluicao-empresario "f1" 6 ;; empresario fertilizante premium
+  table:put tabela-poluicao-empresario "f2" 3 ;; empresario fertilizante super premium
+
+  table:put tabela-poluicao-empresario "m0" 3 ;; empresario maquina pacote-maquina 1
+  table:put tabela-poluicao-empresario "m1" 6 ;; empresario maquina pacote-maquina 2
+  table:put tabela-poluicao-empresario "m2" 9 ;; empresario maquina pacote-maquina 3
+  table:put tabela-poluicao-empresario "m3" 40 ;; empresario maquina pulverizador
+
+  ;; define a tabela de multas
+  set tabela-multa table:make
 end
 
 to cria-area
-
-  ;; Cria a grama
+  ;; cria a grama
   ask patches [ set pcolor green - random-float 0.5 ]
 
-  ;; Cria o rio
-  ask patches with [(pycor > -3 and pycor < 12 and pxcor < 45)] [
-    set pcolor blue;
+  ;; cria o rio
+  ask patches with [pycor > -3 and pycor < 12] [
+    set pcolor blue + 0.5;
   ]
 
-  ;; Cria as pontes
+  ;; cria as pontes
   set-default-shape pontes "tile stones"
   create-pontes 1 [
     set color grey
@@ -124,7 +286,7 @@ to cria-area
     ]
   ]
 
-  ;; Cria as empresas dos empresários da direita
+  ;; cria as empresas dos empresários da direita
   set-default-shape empresas "factory-dir"
   create-empresas 1 [
     set color brown
@@ -146,7 +308,7 @@ to cria-area
     set plabel "agrotoxic"
   ]
 
-  ;;  Cria as empresas dos empresários da esquerda
+  ;;  cria as empresas dos empresários da esquerda
   set-default-shape empresas "factory-esq"
   create-empresas 1 [
     set color brown
@@ -168,7 +330,7 @@ to cria-area
     set plabel "seeds"
   ]
 
-  ;; Cria a prefeitura
+  ;; cria a prefeitura
   set-default-shape prefeituras "prefeitura"
   create-prefeituras 1 [
     set color (grey + 4)
@@ -178,25 +340,36 @@ to cria-area
 end
 
 to cria-agricultores
+  set-default-shape agricultores "agricultor"
   set-default-shape cercas "square 3"
 
-  ;; Cria as fazendas
+  ;; cria os agricultores
   let i 0
-  create-cercas number-farmer [
-    set size 20
-    setxy (item 0 table:get posicao-inicial (word "f" i)) (item 1 table:get posicao-inicial (word "f" i))
-    set i (i + 1)
-  ]
-
-  set-default-shape agricultores "agricultor"
-
-  ;; Cria os agricultores
-  set i 0
   create-agricultores number-farmer [
     set size 5
     set color 137
     set label (word "f" i)
     move-to patch (item 0 table:get posicao-inicial (word "a" i)) (item 1 table:get posicao-inicial (word "a" i))
+
+    set saldo 600
+    set poluicao 0 ;; referente a rodada atual, começa com zero
+    set producao 0 ;; referente a rodada atual, começa com zero
+    set id i
+
+    ;; cria as 6 paracelas de terra do agricultor
+    set parcelas table:make
+
+    set i (i + 1)
+  ]
+
+  ;; zera as 6 parcelas de terra de cada agricultor
+  zera-parcelas
+
+  ;; cria as fazendas
+  set i 0
+  create-cercas number-farmer [
+    set size 20
+    setxy (item 0 table:get posicao-inicial (word "f" i)) (item 1 table:get posicao-inicial (word "f" i))
     set i (i + 1)
   ]
 end
@@ -207,45 +380,57 @@ to cria-empresarios
   ;; "sementes" "agrotoxicos" "fertilizantes" "maquinas"
   let setores-aux ["s" "a" "f" "m"]
 
-  ;; Cria os 4 empresarios (1 - sementes; 2 - agrotóxico; 3 - fertilizantes 4 - maquinas )
+  ;; cria os 4 empresarios (1 - sementes; 2 - agrotóxico; 3 - fertilizantes 4 - maquinas )
   let i 0
   create-empresarios 4 [
     set size 5
     set color 137 - (i)
     set setor (item i setores-aux)
     setxy (item 0 table:get posicao-inicial (word "e" i)) (item 1 table:get posicao-inicial (word "e" i))
+
+    set saldo 100
+    set poluicao 0 ;; referente a rodada atual, começa com zero
+    set producao 0 ;; referente a rodada atual, começa com zero
+
     set i (i + 1)
   ]
 
-  ;; Cria os produtos com seus respectivos preços
+  ;; cria os produtos com seus respectivos preços
   ask empresarios [
     if setor = "s" [
+      ;; key é o códido do produto, e chave é o preço e quantidade de produtos vendidos
       set produtos table:make
-      table:put produtos "0" 10 ;;hortalica
-      table:put produtos "1" 20 ;; arroz
-      table:put produtos "2" 30 ;; soja
+      table:put produtos 0 [10 0] ;; hortalica
+      table:put produtos 1 [20 0] ;; arroz
+      table:put produtos 2 [30 0] ;; soja
     ]
 
     if setor = "a" [
+      ;; key é o códido do produto, e chave é o preço e quantidade de produtos vendidos
       set produtos table:make
-      table:put produtos "0" 10 ;; comum
-      table:put produtos "1" 20 ;; premium
-      table:put produtos "2" 30 ;; super-premium
+      table:put produtos 0 [10 0] ;; comum
+      table:put produtos 1 [20 0] ;; premium
+      table:put produtos 2 [30 0] ;; super-premium
     ]
 
     if setor = "f" [
+      ;; key é o códido do produto, e chave é o preço e quantidade de produtos vendidos
       set produtos table:make
-      table:put produtos "0" 30 ;; comum
-      table:put produtos "1" 60 ;; premium
-      table:put produtos "2" 90 ;; super-premium
+      table:put produtos 0 [30 0] ;; comum
+      table:put produtos 1 [60 0] ;; premium
+      table:put produtos 2 [90 0] ;; super-premium
     ]
 
     if setor = "m" [
+      ;; key é o códido do produto, e chave é o preço e quantidade de produtos vendidos
       set produtos table:make
-      table:put produtos "0" 30 ;; pacote 1
-      table:put produtos "1" 60 ;; pacote 2
-      table:put produtos "2" 90 ;; pacote 3
-      table:put produtos "4" 400 ;; pulverizador
+      table:put produtos 0 [30 0] ;; pacote 1
+      table:put produtos 1 [60 0] ;; pacote 2
+      table:put produtos 2 [90 0] ;; pacote 3
+
+      ;; somente tem efeito no cálculo da poluição do empresário
+      ;; na produção do agricultor, não faz diferença
+      table:put produtos 3 [400 0] ;; pulverizador
     ]
   ]
 
@@ -275,48 +460,366 @@ to cria-prefeito
 end
 
 to go
-  prantar ;; teste
+  atualiza-rodada ;; zera os valores das parcelas, producao (TODO) e poluicao (TODO)
+
+  print-log-saldo
+
+  compra-venda-produtos ;; agricultor e empresarios
+
+  print-log-saldo-agricultores
+  print-log-producao-empresarios
+
+  atualiza-poluicao-empresarios ;; empresário: após a venda/aluguel de produtos
+  print-log-poluicao-empresarios
+
+  planta ;; agricultor
+
+  atualiza-producao-agricultores ;; agricultor: após a plantação
+  atualiza-poluicao-agricultores ;;  agricultor: após a plantação
+
+  print-log-producao-agricultores
+  print-log-poluicao-agricultores
+
+  ;; fiscaliza ;; fiscal
+  ;; paga-imposto ;; agricultor e empresarios
+
+   ;; TODO
+  atualiza-saldo-agricultores ;; agricultor: após pagar os impostos, possíveis multas
+  atualiza-saldo-empresarios ;; empresarios: após pagar os impostos, possíveis multas
+
+  ;; atualiza-poluicao-global
+
+  ;; aplica-medidas-prevencao-poluicao ;; prefeito: após atualizar poluição global
+
+
   tick
 end
 
-to prantar ;; testando a importação de imagens
-  wait 0.5
+to atualiza-rodada
+  ;; zera as percelas de terra de todos os agricultores
+  zera-parcelas
+  zera-producao-e-poluicao
+  zera-quantidade-produtos-vendidos
 
-  ;; Agricultor 1
-  bitmap:copy-to-drawing (bitmap:import "arroz_20.jpg") 51 375
-  wait 0.5
-  bitmap:copy-to-drawing (bitmap:import "arroz_20.jpg") 96 375
-  wait 0.5
-  bitmap:copy-to-drawing (bitmap:import "arroz_20.jpg") 141 375
-  wait 0.5
-  bitmap:copy-to-drawing (bitmap:import "arroz_20.jpg") 51 420
-  wait 0.5
-  bitmap:copy-to-drawing (bitmap:import "soja_20.jpg") 96 420
-
-  wait 1
-  ;; Agricultor 2
-  bitmap:copy-to-drawing (bitmap:import "soja_20.jpg") 239 375
-  wait 0.5
-  bitmap:copy-to-drawing (bitmap:import "soja_20.jpg") 284 375
-  wait 0.5
-  bitmap:copy-to-drawing (bitmap:import "soja_20.jpg") 329 375
-  wait 0.5
-  bitmap:copy-to-drawing (bitmap:import "soja_20.jpg") 239 420
-  wait 0.5
-  bitmap:copy-to-drawing (bitmap:import "soja_20.jpg") 284 420
-  wait 0.5
-  bitmap:copy-to-drawing (bitmap:import "soja_20.jpg") 329 420
-
-  wait 1
-  ;; Agricultor 3
-  bitmap:copy-to-drawing (bitmap:import "hortalica_20.png") 426 375
-  wait 0.5
-  bitmap:copy-to-drawing (bitmap:import "hortalica_20.png") 471 375
-  wait 0.5
-  bitmap:copy-to-drawing (bitmap:import "hortalica_20.png") 516 375
-
-  wait 3
+  ;; apaga na interface as imagens nas parcelas
   clear-drawing
+
+  set simulation-round simulation-round + 1
+
+  print-log "******************************"
+  print-log (word "*********  RODADA " simulation-round "  *********")
+  print-log "******************************"
+end
+
+to zera-parcelas
+  ask agricultores [
+    let p 0
+    while [p < 6] [
+      table:put parcelas (word "p" p "s") "-"
+      table:put parcelas (word "p" p "a") "-"
+      table:put parcelas (word "p" p "f") "-"
+      table:put parcelas (word "p" p "m") "-"
+      table:put parcelas (word "p" p "p") "-"
+      table:put parcelas (word "p" p "producao") "-"
+      table:put parcelas (word "p" p "poluicao") "-"
+
+      set p (p + 1)
+    ]
+  ]
+end
+
+to zera-producao-e-poluicao
+  ask agricultores [
+    set producao 0
+    set poluicao 0
+  ]
+
+  ask empresarios [
+    set producao 0
+    set poluicao 0
+  ]
+end
+
+to zera-quantidade-produtos-vendidos
+  ask empresarios [
+    let p 0 ;; produto
+    let quant 3 ;; quantidade de produtos por setor
+
+    ;; os setores sementes, agrotóxico e fertilizantes têm 3 produtos
+    ;; no setor de máquinas, há 4 produtos
+    if setor = "m" [
+      set quant 4
+    ]
+
+    while [p < quant] [
+      let valor-produto (item 0 (table:get produtos p))
+
+      ;; atualiza a quantidade de produtos vendido
+      ;; valor do produto não pode alterar
+      table:put produtos p (list valor-produto 0)
+      set p p + 1
+    ]
+  ]
+end
+
+to compra-venda-produtos
+  compra-semente
+  ;; compra-agrotoxico
+  ;; compra-fertilizante
+  ;; compra-maquina
+end
+
+to compra-semente
+  ;; cada agricultor deve comprar pelo menos 1 semente dos 3 tipos
+  ;; TODO Permitir agricultores plantarem mais de um tipo de semente em suas plantações
+  ask agricultores [
+    let s random 3 ;; semente aleatória
+    if type-of-seed = "vegetable" [
+      set s 0
+    ]
+    if type-of-seed = "rice" [
+      set s 1
+    ]
+    if type-of-seed = "soy" [
+      set s 2
+    ]
+
+    let p (random 6) + 1 ;; quantidade aleatória de parcelas (de 1 a 6)
+    let valorsem 0
+
+    ask empresarios with [setor = "s"] [
+      ;; valor da semente
+      set valorsem (item 0 (table:get produtos s))
+    ]
+
+    ;; verificar antes se agricultor tem saldo para comprar
+    ;; se saldo do agricultor for maior que o valor da semente, então COMPRA
+    if saldo > p * valorsem [
+      ask empresarios with [setor = "s"] [
+        ;; atualiza o produção (ganhos) do empresario, após a venda
+        set producao (producao + p * valorsem)
+
+        let quantsem (item 1 (table:get produtos s))
+
+        ;; atualiza a quantidade de produtos vendido
+        ;; valor do produto não pode alterar
+        table:put produtos s (list valorsem (quantsem + p))
+      ]
+
+      print-log (word "agricultor " id " comprou " p " saco(s) de " (item s sementes) " ($" valorsem ")" " por R$ " (p * valorsem))
+
+      ;; atualiza o saldo do agricultor
+      set saldo (saldo - p * valorsem)
+
+      let i 0
+      while [i < p] [ ;; atualiza nas parcelas qual semente foi comprada
+        table:put parcelas (word "p" i "s") s
+        set i i + 1
+      ]
+    ]
+  ]
+end
+
+to compra-agrotoxico
+  ;; cada agricultor pode comprar ou não agrotóxico
+  let continua random 2
+  if continua = 1 [
+
+    ask agricultores [
+      ;; seleciona agricultores aleatórios
+
+    ]
+  ]
+end
+
+to atualiza-poluicao-empresarios
+  ask empresarios [
+    let p 0 ;; produto
+    let quant 3 ;; quantidade de produtos por setor
+
+    ;; os setores sementes, agrotóxico e fertilizantes têm 3 produtos
+    ;; no setor de máquinas, há 4 produtos
+    if setor = "m" [
+      set quant 4
+    ]
+
+    while [p < quant] [
+      let quant-produtos-vendidos (item 1 (table:get produtos p))
+      if quant-produtos-vendidos > 0 [
+        set poluicao poluicao + quant-produtos-vendidos * (table:get tabela-poluicao-empresario (word setor p))
+      ]
+      set p p + 1
+    ]
+  ]
+end
+
+to planta
+  ;; realiza a plantação das sementes
+  ask agricultores [
+    let p 0
+    let plantou false
+    while [p < 6] [
+      let s table:get parcelas (word "p" p "s")
+
+      if s != "-" [ ;; verifica se tem semente comprada para esta parcela
+        set plantou true
+
+        let x (item 0 (table:get posicao-parcelas (word "a" id "p" p)))
+        let y (item 1 (table:get posicao-parcelas (word "a" id "p" p)))
+
+        ;; realiza a plantação
+        bitmap:copy-to-drawing (bitmap:import (item s sementes-imagens)) x y
+      ]
+
+      set p p + 1
+    ]
+
+    if plantou [
+      print-log (word "agricultor " id " finalizou a plantação!")
+    ]
+  ]
+end
+
+to atualiza-producao-agricultores
+  ask agricultores [
+    let p 0
+    while [p < 6] [
+      let s table:get parcelas (word "p" p "s")
+      let a table:get parcelas (word "p" p "a")
+      let f table:get parcelas (word "p" p "f")
+      let m table:get parcelas (word "p" p "m")
+
+      if s != "-" [ ;; verifica se tem semente comprada para esta parcela
+        let ganho-parcela table:get tabela-produtividade (word s a f m)
+
+        ;; atualiza a produtividade da parcela
+        table:put parcelas (word "p" p "producao") ganho-parcela
+
+        ;; atualiza a produtividade total do agricultor (soma da produção de cada parcela)
+        set producao producao + ganho-parcela
+      ]
+
+      set p p + 1
+    ]
+  ]
+end
+
+to atualiza-saldo-agricultores
+  ask agricultores [
+    set saldo saldo + producao
+  ]
+end
+
+to atualiza-saldo-empresarios
+  ask empresarios [
+    set saldo saldo + producao
+  ]
+end
+
+to atualiza-poluicao-agricultores
+  ask agricultores [
+    let p 0
+    while [p < 6] [
+      let s table:get parcelas (word "p" p "s")
+      let a table:get parcelas (word "p" p "a")
+
+      if s != "-" [ ;; verifica se tem semente comprada para esta parcela
+        let poluicao-parcela table:get tabela-poluicao-agricultor (word s a)
+
+        ;; atualiza a poluicao da parcela
+        table:put parcelas (word "p" p "poluicao") poluicao-parcela
+
+        ;; atualiza a poluicao individual do agricultor (soma da poluicao de cada parcela)
+        set poluicao poluicao + poluicao-parcela
+      ]
+
+      set p p + 1
+    ]
+  ]
+end
+
+to print-log-saldo-agricultores
+  print-log ""
+  ask agricultores [
+    print-log (word "Saldo atual: agricultor " id ": " saldo)
+  ]
+  print-log ""
+end
+
+to print-log-saldo
+  print-log ""
+  ask agricultores [
+    print-log (word "Saldo atual: agricultor " id ": " saldo)
+  ]
+  print-log ""
+  ask empresarios [
+    print-log (word "Saldo atual: empresário de "  (table:get setores setor) ": " saldo)
+  ]
+  print-log ""
+end
+
+to print-log-producao-agricultores
+  print-log ""
+  ask agricultores [
+    if producao > 0 [
+      print-log (word "Ganhos do agricultor " id ": " producao)
+    ]
+  ]
+  print-log ""
+end
+
+to print-log-producao-empresarios
+  ;; print-log ""
+  ask empresarios [
+    if producao > 0 [
+      print-log (word "Ganhos do empresário de "  (table:get setores setor) ": " producao)
+    ]
+  ]
+  print-log ""
+end
+
+to print-log-poluicao-agricultores
+  ;; print-log ""
+  ask agricultores [
+    print-log (word "Poluição do agricultor " id ": " poluicao)
+  ]
+  print-log ""
+end
+
+to print-log-poluicao-empresarios
+  ;; print-log ""
+  ask empresarios [
+    print-log (word "Poluição do empresário de "  (table:get setores setor) ": " poluicao)
+  ]
+  print-log ""
+end
+
+to atualiza-cor-rio
+  let x 0
+  if global-polution < 20 [
+    set pcolor blue + 0.5
+  ]
+  if global-polution >= 20 and global-polution <= 39 [
+    set x 0.66
+  ]
+  if global-polution >= 40 and global-polution <= 59 [
+    set x 1.32
+  ]
+  if global-polution >= 60 and global-polution <= 69 [
+    set x 1.98
+  ]
+  if global-polution >= 70 and global-polution <= 79 [
+    set x 2.64
+  ]
+  if global-polution >= 80 and global-polution <= 89 [
+    set x 3.3
+  ]
+  if global-polution >= 90 and global-polution <= 100 [
+    set x 3.96
+  ]
+  ask patches with [pycor > -3 and pycor < 12] [
+    set pcolor blue + 0.5 - x - random-float 0.25
+  ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -370,7 +873,7 @@ BUTTON
 72
 NIL
 go
-T
+NIL
 1
 T
 OBSERVER
@@ -406,20 +909,20 @@ type-of-agrotoxic
 0
 
 CHOOSER
-21
-235
-159
-280
+22
+285
+160
+330
 type-of-machine
 type-of-machine
-"random" "combination-1" "combination-2" "combination-3" "pulverizer" "no-machine"
+"random" "combination-1" "combination-2" "combination-3" "no-machine"
 0
 
 CHOOSER
 21
-284
+236
 159
-329
+281
 type-of-fertilizer
 type-of-fertilizer
 "random" "commum" "premium" "super-premium" "no-fertilizer"
@@ -432,25 +935,25 @@ CHOOSER
 182
 type-of-seed
 type-of-seed
-"random" "soy" "rice" "vegetable"
-3
+"random" "vegetable" "rice" "soy"
+2
 
 SWITCH
-22
-350
+21
+456
+175
+489
+water-treatment?
+water-treatment?
+0
+1
+-1000
+
+SWITCH
+21
+493
 176
-383
-water-treatment?
-water-treatment?
-0
-1
--1000
-
-SWITCH
-22
-387
-177
-420
+526
 waste-treatment?
 waste-treatment?
 0
@@ -458,10 +961,10 @@ waste-treatment?
 -1000
 
 SWITCH
-22
-424
-186
-457
+21
+530
+185
+563
 sewage-treatment?
 sewage-treatment?
 0
@@ -469,10 +972,10 @@ sewage-treatment?
 -1000
 
 MONITOR
-844
-28
-938
-73
+944
+11
+1038
+56
 global-polution
 (word global-polution \"%\")
 17
@@ -480,15 +983,212 @@ global-polution
 11
 
 MONITOR
-845
-84
-949
-129
+833
+11
+937
+56
 simulation-round
 simulation-round
 17
 1
 11
+
+MONITOR
+833
+85
+990
+130
+farmer-0-account-balance
+[saldo] of agricultores with [id = 0]
+17
+1
+11
+
+MONITOR
+833
+135
+990
+180
+farmer-1-account-balance
+[saldo] of agricultores with [id = 1]
+17
+1
+11
+
+MONITOR
+833
+185
+990
+230
+farmer-2-account-balance
+[saldo] of agricultores with [id = 2]
+17
+1
+11
+
+MONITOR
+833
+234
+990
+279
+farmer-3-account-balance
+[saldo] of agricultores with [id = 3]
+17
+1
+11
+
+MONITOR
+833
+284
+990
+329
+farmer-4-account-balance
+[saldo] of agricultores with [id = 4]
+17
+1
+11
+
+MONITOR
+834
+333
+991
+378
+farmer-5-account-balance
+[saldo] of agricultores with [id = 5]
+17
+1
+11
+
+MONITOR
+836
+404
+1052
+449
+businessman-seeds-account-balance
+[saldo] of empresarios with [setor = \"s\"]
+17
+1
+11
+
+MONITOR
+836
+453
+1071
+498
+businessman-agrotoxic-account-balance
+[saldo] of empresarios with [setor = \"a\"]
+17
+1
+11
+
+MONITOR
+836
+502
+1064
+547
+businessman-fertilizer-account-balance
+[saldo] of empresarios with [setor = \"f\"]
+17
+1
+11
+
+MONITOR
+837
+551
+1065
+596
+businessman-machine-account-balance
+[saldo] of empresarios with [setor = \"m\"]
+17
+1
+11
+
+MONITOR
+999
+84
+1124
+129
+farmer-0-gain
+[producao] of agricultores with [id = 0]
+17
+1
+11
+
+MONITOR
+999
+135
+1088
+180
+farmer-1-gain
+[producao] of agricultores with [id = 1]
+17
+1
+11
+
+MONITOR
+1000
+185
+1089
+230
+farmer-2-gain
+[producao] of agricultores with [id = 2]
+17
+1
+11
+
+MONITOR
+1001
+234
+1090
+279
+farmer-3-gain
+[producao] of agricultores with [id = 3]
+17
+1
+11
+
+MONITOR
+1001
+283
+1090
+328
+farmer-4-gain
+[producao] of agricultores with [id = 4]
+17
+1
+11
+
+MONITOR
+1002
+333
+1091
+378
+farmer-5-gain
+[producao] of agricultores with [id = 5]
+17
+1
+11
+
+CHOOSER
+22
+334
+160
+379
+use-of-pulverizer
+use-of-pulverizer
+"random" "pulverizer" "no-pulverizer"
+0
+
+SWITCH
+23
+401
+131
+434
+fine?
+fine?
+0
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
