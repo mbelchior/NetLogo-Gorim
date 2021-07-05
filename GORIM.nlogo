@@ -3,7 +3,7 @@ extensions [ table bitmap ]
 
 ;; Cria as breeds
 breed [ pontes ponte ]
-breed [ cercas cerca ]
+breed [ cercas cerca ] ;; farm
 breed [ empresas empresa ]
 breed [ prefeituras prefeitura ]
 breed [ fiscais fiscal ]
@@ -13,11 +13,18 @@ breed [ prefeitos prefeito ]
 ;;breed [ vereadores vereador]
 
 ;; Cria as variáveis
-agricultores-own [ id parcelas saldo producao poluicao  ]
+agricultores-own [ id parcelas saldo producao poluicao quant-semente-plantada ]
 empresarios-own [ setor produtos producao saldo poluicao ]
+prefeitos-own [ saldo ]
 
-globals [global-polution simulation-round posicao-inicial posicao-parcelas sementes setores sementes-imagens
-  tabela-produtividade tabela-poluicao-agricultor tabela-poluicao-empresario tabela-multa ]
+globals [ global-pollution simulation-round posicao-inicial posicao-parcelas tipos-semente tipos-agrotoxico tipos-fertilizante setores
+  sementes-imagens agrotoxico-imagens
+  tabela-produtividade tabela-poluicao-agricultor tabela-poluicao-empresario
+  tipos-multa reducao-poluicao medida-prevencao
+  caminho-prefeito caminho-fiscal-to-farmers caminho-fiscal-to-businessman
+  caminho-agricultores-para-empresario-semente caminho-agricultores-para-empresario-agrotoxico caminho-agricultores-para-empresario-fertilizante
+  caminho-agricultores-para-empresario-maquina
+  stop? tempo-espera-movimentacao ]
 
 to setup
   clear-all
@@ -119,10 +126,82 @@ to setup-inicial
   table:put posicao-parcelas "a5p5" [516 561]
 
   ;; define variáveis globais
-  set global-polution 30
+  set global-pollution 20
   set simulation-round 0
-  set sementes ["hortalica" "arroz" "soja"]
+  set reducao-poluicao 0
+  set tipos-semente ["hortalica" "arroz" "soja"]
+  set tipos-agrotoxico ["comum" "premium" "super premium"]
+  set tipos-fertilizante ["comum" "premium" "super premium"]
   set sementes-imagens ["hortalica_20.png" "arroz_20.jpg" "soja_20.jpg"]
+  set agrotoxico-imagens ["agrotoxico_comum_20.jpg" "agrotoxico_premium_20.jpg" "agrotoxico_super_premium_20.jpg"]
+  set tipos-multa ["sem multa" "multa leve" "multa média" "multa alta"]
+  set medida-prevencao [ "água" "lixo" "esgoto" ]
+  set stop? false
+
+  ;; agent-movement-speed -> 1 a 10
+  ;; tempo-espera-movimentacao -> 0.1 a 0.01
+  ;; atualiza a velocidade dos agentes
+  set tempo-espera-movimentacao 0.1 / agent-movement-speed
+
+  ;; poluição global mostrada no rio
+  ask patch 0 4 [
+    set plabel (word global-pollution "%")
+  ]
+
+  ;; Caminhos
+  set caminho-prefeito [[0 19] [0 17] [0 15] [0 13]]
+
+  let caminho-0-fiscal [[-5 19] [-5 15] [-9 15] [-13 15] [-17 15] [-20 15] [-20 11] [-20 7] [-20 3] [-20 -1] [-20 -6] [-22 -6] [-22 -6]]
+  let caminho-1-fiscal [[-5 19] [-5 15] [-9 15] [-13 15] [-17 15] [-20 15] [-20 11] [-20 7] [-20 3] [-20 -1] [-20 -6] [-16 -6] [-12 -6] [-8 -6] [-3 -6] [-3 -6] ]
+  let caminho-2-fiscal [[-5 19] [-5 15] [-1 15] [3 15] [7 15] [12 15] [17 15] [21 15] [21 11] [21 7] [21 3] [21 -1] [21 -6] [22 -6] [22 -6]]
+  let caminho-3-fiscal [[-5 19] [-5 15] [-9 15] [-13 15] [-17 15] [-20 15] [-20 11] [-20 7] [-20 3] [-20 -1] [-20 -6] [-16 -6] [-12 -6] [-12 -10] [-12 -14] [-12 -18] [-12 -22] [-12 -25] [-16 -25] [-20 -25] [-22 -25] [-22 -25]]
+  let caminho-4-fiscal [[-5 19] [-5 15] [-9 15] [-13 15] [-17 15] [-20 15] [-20 11] [-20 7] [-20 3] [-20 -1] [-20 -6] [-16 -6] [-12 -6] [-12 -10] [-12 -14] [-12 -18] [-12 -22] [-12 -25] [-8 -25] [-3 -25] [-3 -25]]
+  let caminho-5-fiscal [[-5 19] [-5 15] [-1 15] [3 15] [7 15] [12 15] [17 15] [21 15] [21 11] [21 7] [21 3] [21 -1] [21 -6] [15 -6] [12 -6] [12 -10] [12 -14] [12 -18] [12 -22] [12 -25] [17 -25] [22 -25]]
+  set caminho-fiscal-to-farmers (list caminho-0-fiscal caminho-1-fiscal caminho-2-fiscal caminho-3-fiscal caminho-4-fiscal caminho-5-fiscal)
+
+  set caminho-fiscal-to-businessman [[-5 19] [-9 19] [-13 19] [-17 19] [-19 19] [-19 21] [-19 21] ;; até empresário de sementes
+    [-19 25] [-19 29] [-19 34] [-21 34] [-24 34] [-24 34] ;;até empresário de fertilizantes
+    [-21 34] [-18 34] [-14 34] [-14 30] [-14 26] [-14 22] [-14 18] [-14 15] [-10 15] [-6 15] [-2 15] [2 15] [6 15] [10 15] [14 15] [14 19] [14 21] [18 21] [20 21] [20 21] ;; até empresário de agrotóxico
+    [20 25] [20 29] [20 34] [25 34] [25 34] ;; até empresário de máquinas
+    [21 34] [16 34] [16 30] [16 26] [16 22] [16 18] [16 15] [12 15] [8 15] [4 15] [0 15] [-5 15] [-5 19] ] ;; volta para a origem
+
+
+  let caminho-agricultor-0-sementes [[-25 -6] [-20 -6] [-20 -2] [-20 2] [-20 6] [-20 10] [-20 14] [-20 18] [-19 21] [-19 21]]
+  let caminho-agricultor-1-sementes [[0 -6] [-4 -6] [-8 -6] [-12 -6] [-16 -6] [-20 -6] [-20 -2] [-20 2] [-20 6] [-20 10] [-20 14] [-20 18] [-19 21] [-19 21]]
+  let caminho-agricultor-2-sementes [[25 -6] [21 -6] [21 -2] [21 2] [21 7] [21 11] [21 15] [17 15] [13 15] [8 15] [4 15] [0 15] [-4 15] [-8 15] [-12 15] [-15 15] [-15 18] [-15 21] [-19 21] [-19 21]]
+  let caminho-agricultor-3-sementes [[-25 -25] [-21 -25] [-17 -25] [-13 -25] [-13 -21] [-13 -17] [-13 -13] [-13 -9] [-13 -6] [-17 -6] [-20 -6] [-20 -1] [-20 3] [-20 7] [-20 11] [-20 15] [-20 19] [-19 21] [-19 21] ]
+  let caminho-agricultor-4-sementes [[0 -25] [-4 -25] [-8 -25] [-12 -25] [-12 -21] [-12 -17] [-12 -13] [-12 -9] [-12 -6] [-16 -6] [-20 -6] [-20 -1] [-20 3] [-20 7] [-20 11] [-20 15] [-20 19] [-19 21] [-19 21]]
+  let caminho-agricultor-5-sementes [[25 -25] [21 -25] [17 -25] [13 -25] [13 -21] [13 -17] [13 -13] [13 -9] [13 -6] [17 -6] [21 -6] [21 -2] [21 2] [21 7] [21 11] [21 15] [17 15] [13 15] [8 15] [4 15] [0 15] [-4 15] [-8 15] [-12 15] [-15 15] [-15 18] [-15 21] [-19 21] [-19 21]]
+
+  set caminho-agricultores-para-empresario-semente (list caminho-agricultor-0-sementes caminho-agricultor-1-sementes caminho-agricultor-2-sementes caminho-agricultor-3-sementes caminho-agricultor-4-sementes caminho-agricultor-5-sementes)
+
+  let caminho-agricultor-0-agrotoxico [[-25 -6] [-20 -6] [-20 -2] [-20 2] [-20 6] [-20 10] [-20 14] [-20 18] [-17 18] [-14 18] [-14 15] [-10 15] [-6 15] [-2 15] [2 15] [6 15] [10 15] [14 15] [14 19] [14 21] [18 21] [20 21] [20 21]]
+  let caminho-agricultor-1-agrotoxico [[0 -6] [4 -6] [9 -6] [13 -6][17 -6] [21 -6] [21 -2] [21 2] [21 7] [21 11] [21 15] [21 19] [20 21] [20 21]]
+  let caminho-agricultor-2-agrotoxico [[25 -6] [21 -6] [21 -2] [21 2] [21 7] [21 11] [21 15] [21 19] [20 21] [20 21]]
+  let caminho-agricultor-3-agrotoxico [[-25 -25] [-21 -25] [-17 -25] [-13 -25] [-13 -21] [-13 -17] [-13 -13] [-13 -9] [-13 -6] [-17 -6] [-20 -6] [-20 -1] [-20 3] [-20 7] [-20 11] [-20 15] [-20 18] [-17 18] [-14 18] [-14 15] [-10 15] [-6 15] [-2 15] [2 15] [6 15] [10 15] [14 15] [14 19] [14 21] [18 21] [20 21] [20 21]]
+  let caminho-agricultor-4-agrotoxico [[0 -25] [4 -25] [9 -25] [13 -25] [13 -21] [13 -17] [13 -13] [13 -9] [13 -6] [17 -6] [21 -6] [21 -2] [21 2] [21 7] [21 11] [21 15] [21 19] [20 21] [20 21]]
+  let caminho-agricultor-5-agrotoxico [[25 -25] [21 -25] [17 -25] [13 -25] [13 -21] [13 -17] [13 -13] [13 -9] [13 -6] [17 -6] [21 -6] [21 -2] [21 2] [21 7] [21 11] [21 15] [21 19] [20 21] [20 21]]
+
+  set caminho-agricultores-para-empresario-agrotoxico (list caminho-agricultor-0-agrotoxico caminho-agricultor-1-agrotoxico caminho-agricultor-2-agrotoxico caminho-agricultor-3-agrotoxico caminho-agricultor-4-agrotoxico caminho-agricultor-5-agrotoxico)
+
+  let caminho-agricultor-0-fertilizante [[-25 -6] [-20 -6] [-20 -2] [-20 2] [-20 6] [-20 10] [-20 14] [-20 18] [-20 22] [-20 26] [-20 30] [-20 34] [-24 34] [-24 34]]
+  let caminho-agricultor-1-fertilizante [[0 -6] [-4 -6] [-8 -6] [-12 -6] [-16 -6] [-20 -6] [-20 -2] [-20 2] [-20 6] [-20 10] [-20 14] [-20 18] [-20 22] [-20 26] [-20 30] [-20 34] [-24 34] [-24 34]]
+  let caminho-agricultor-2-fertilizante [[25 -6] [21 -6] [21 -2] [21 2] [21 7] [21 11] [21 15] [17 15] [13 15] [8 15] [4 15] [0 15] [-4 15] [-8 15] [-12 15] [-15 15] [-15 19] [-15 23] [-15 27] [-15 31] [-15 34] [-19 34] [-24 34] [-24 34]]
+  let caminho-agricultor-3-fertilizante [[-25 -25] [-21 -25] [-17 -25] [-13 -25] [-13 -21] [-13 -17] [-13 -13] [-13 -9] [-13 -6] [-17 -6] [-20 -6] [-20 -1] [-20 3] [-20 7] [-20 11] [-20 15] [-20 18] [-20 22] [-20 26] [-20 30] [-20 34] [-24 34] [-24 34]]
+  let caminho-agricultor-4-fertilizante [[0 -25] [-4 -25] [-8 -25] [-12 -25] [-12 -21] [-12 -17] [-12 -13] [-12 -9] [-12 -6] [-16 -6] [-20 -6] [-20 -1] [-20 3] [-20 7] [-20 11] [-20 15] [-20 18] [-20 22] [-20 26] [-20 30] [-20 34] [-24 34] [-24 34]]
+  let caminho-agricultor-5-fertilizante [[25 -25] [21 -25] [17 -25] [13 -25] [13 -21] [13 -17] [13 -13] [13 -9] [13 -6] [17 -6] [21 -6] [21 -2] [21 2] [21 7] [21 11] [21 15] [17 15] [13 15] [8 15] [4 15] [0 15] [-4 15] [-8 15] [-12 15] [-15 15] [-15 18] [-15 22] [-15 26] [-15 30] [-15 34] [-19 34] [-24 34] [-24 34]]
+
+  set caminho-agricultores-para-empresario-fertilizante (list caminho-agricultor-0-fertilizante caminho-agricultor-1-fertilizante caminho-agricultor-2-fertilizante caminho-agricultor-3-fertilizante caminho-agricultor-4-fertilizante caminho-agricultor-5-fertilizante)
+
+  let caminho-agricultor-0-maquina [[-25 -6] [-20 -6] [-20 -2] [-20 2] [-20 6] [-20 10] [-20 14] [-20 18] [-17 18] [-14 18] [-14 15] [-10 15] [-6 15] [-2 15] [2 15] [6 15] [10 15] [14 15] [14 19] [14 23] [14 27] [14 31] [14 34] [18 34] [22 34] [25 34] [25 34]]
+  let caminho-agricultor-1-maquina [[0 -6] [4 -6] [9 -6] [13 -6][17 -6] [21 -6] [21 -2] [21 2] [21 7] [21 11] [21 15] [21 19] [21 23] [21 27] [21 31] [21 34] [25 34] [25 34]]
+  let caminho-agricultor-2-maquina [[25 -6] [21 -6] [21 -2] [21 2] [21 7] [21 11] [21 15] [21 19] [21 23] [21 27] [21 31] [21 34] [25 34] [25 34]]
+  let caminho-agricultor-3-maquina [[-25 -25] [-21 -25] [-17 -25] [-13 -25] [-13 -21] [-13 -17] [-13 -13] [-13 -9] [-13 -6] [-17 -6] [-20 -6] [-20 -1] [-20 3] [-20 7] [-20 11] [-20 15] [-20 18] [-17 18] [-14 18] [-14 15] [-10 15] [-6 15] [-2 15] [2 15] [6 15] [10 15] [14 15] [14 19] [14 23] [14 27] [14 31] [14 34] [18 34] [22 34] [25 34] [25 34]]
+  let caminho-agricultor-4-maquina [[0 -25] [4 -25] [9 -25] [13 -25] [13 -21] [13 -17] [13 -13] [13 -9] [13 -6] [17 -6] [21 -6] [21 -2] [21 2] [21 7] [21 11] [21 15] [21 19]  [21 23] [21 27] [21 31] [21 34] [25 34] [25 34]]
+  let caminho-agricultor-5-maquina [[25 -25] [21 -25] [17 -25] [13 -25] [13 -21] [13 -17] [13 -13] [13 -9] [13 -6] [17 -6] [21 -6] [21 -2] [21 2] [21 7] [21 11] [21 15] [21 19] [21 23] [21 27] [21 31] [21 34] [25 34] [25 34]]
+
+  set caminho-agricultores-para-empresario-maquina (list caminho-agricultor-0-maquina caminho-agricultor-1-maquina caminho-agricultor-2-maquina caminho-agricultor-3-maquina caminho-agricultor-4-maquina caminho-agricultor-5-maquina)
+
 
   ;; setores
   set setores table:make
@@ -133,9 +212,9 @@ to setup-inicial
 
   ;; tabela de produtividade
   set tabela-produtividade table:make
-  table:put tabela-produtividade "0---" 10 ;; hortaliça
-  table:put tabela-produtividade "1---" 10 ;; arroz
-  table:put tabela-produtividade "2---" 10 ;; soja
+  table:put tabela-produtividade "0---" 10 ;; hortaliça, arroz e soja
+  ;;table:put tabela-produtividade "1---" 10 ;; arroz ;; produtividade é igual a da hortaliça
+  ;;table:put tabela-produtividade "2---" 10 ;; soja ;; produtividade é igual a da hortaliça
 
   table:put tabela-produtividade "00--" 30  ;; hortaliça + agrotóxico comum
   table:put tabela-produtividade "01--" 60  ;; hortaliça + agrotóxico premium
@@ -187,17 +266,17 @@ to setup-inicial
   table:put tabela-poluicao-agricultor "1-" 20 ;; arroz
   table:put tabela-poluicao-agricultor "2-" 30 ;; soja
 
-  table:put tabela-poluicao-agricultor "00" 30 ;; hortaliça + agrotóxico super premium
+  table:put tabela-poluicao-agricultor "00" 100 ;; hortaliça + agrotóxico comum
   table:put tabela-poluicao-agricultor "01" 60 ;; hortaliça + agrotóxico premium
-  table:put tabela-poluicao-agricultor "02" 100 ;; hortaliça + agrotóxico comum
+  table:put tabela-poluicao-agricultor "02" 30 ;; hortaliça + agrotóxico super premium
 
-  table:put tabela-poluicao-agricultor "10" 60 ;; arroz + agrotóxico super premium
+  table:put tabela-poluicao-agricultor "10" 200 ;; arroz + agrotóxico comum
   table:put tabela-poluicao-agricultor "11" 120 ;; arroz + agrotóxico premium
-  table:put tabela-poluicao-agricultor "12" 200 ;; arroz + agrotóxico comum
+  table:put tabela-poluicao-agricultor "12" 60 ;; arroz + agrotóxico super premium
 
-  table:put tabela-poluicao-agricultor "20" 90 ;; soja + agrotóxico super premium
+  table:put tabela-poluicao-agricultor "20" 300 ;; soja + agrotóxico comum
   table:put tabela-poluicao-agricultor "21" 180 ;; soja + agrotóxico premium
-  table:put tabela-poluicao-agricultor "22" 300 ;; soja + agrotóxico comum
+  table:put tabela-poluicao-agricultor "22" 90 ;; soja + agrotóxico super premium
 
   ;; define a tabela de poluicao dos empresarios
   ;; poluição é gerada após a venda dos produtos
@@ -219,8 +298,6 @@ to setup-inicial
   table:put tabela-poluicao-empresario "m2" 9 ;; empresario maquina pacote-maquina 3
   table:put tabela-poluicao-empresario "m3" 40 ;; empresario maquina pulverizador
 
-  ;; define a tabela de multas
-  set tabela-multa table:make
 end
 
 to cria-area
@@ -228,9 +305,7 @@ to cria-area
   ask patches [ set pcolor green - random-float 0.5 ]
 
   ;; cria o rio
-  ask patches with [pycor > -3 and pycor < 12] [
-    set pcolor blue + 0.5;
-  ]
+  muda-cor-rio -0.5 0
 
   ;; cria as pontes
   set-default-shape pontes "tile stones"
@@ -274,17 +349,8 @@ to cria-area
     set size 5
     setxy 21 12
   ]
-    ask pontes [
-    ask patch-here [
-      ask neighbors [
-        set pcolor red - 3
-        ask neighbors [
-          set pcolor red - 3
-        ]
-      ]
-      set pcolor red - 3
-    ]
-  ]
+
+  muda-cor-ponte
 
   ;; cria as empresas dos empresários da direita
   set-default-shape empresas "factory-dir"
@@ -336,6 +402,20 @@ to cria-area
     set color (grey + 4)
     set size 18
     setxy 0 30
+  ]
+end
+
+to muda-cor-ponte
+  ask pontes [
+    ask patch-here [
+      ask neighbors [
+        set pcolor red - 3
+        ask neighbors [
+          set pcolor red - 3
+        ]
+      ]
+      set pcolor red - 3
+    ]
   ]
 end
 
@@ -456,13 +536,21 @@ to cria-prefeito
     set color brown + 1
     set label "mayor"
     setxy 0 19
+
+    set saldo 1000
   ]
 end
 
 to go
+
+  ;; move-agricultor 4 (item 4 caminho-agricultores-para-empresario-agrotoxico)
+
   atualiza-rodada ;; zera os valores das parcelas, producao (TODO) e poluicao (TODO)
 
+  print-log "\nETAPA 1\n"
+
   print-log-saldo
+  print-log-poluicao-global
 
   compra-venda-produtos ;; agricultor e empresarios
 
@@ -480,19 +568,32 @@ to go
   print-log-producao-agricultores
   print-log-poluicao-agricultores
 
-  ;; fiscaliza ;; fiscal
-  ;; paga-imposto ;; agricultor e empresarios
+  print-log "ETAPA 2\n"
 
-   ;; TODO
+  fiscaliza ;; fiscal
+
+  paga-imposto ;; agricultor e empresarios
+
   atualiza-saldo-agricultores ;; agricultor: após pagar os impostos, possíveis multas
   atualiza-saldo-empresarios ;; empresarios: após pagar os impostos, possíveis multas
 
-  ;; atualiza-poluicao-global
+  print-log-saldo
 
-  ;; aplica-medidas-prevencao-poluicao ;; prefeito: após atualizar poluição global
+  atualiza-poluicao-global
+  print-log-poluicao-global
 
+  aplica-medidas-prevencao-poluicao ;; prefeito: após atualizar poluição global
+  atualiza-poluicao-global-apos-tratamento
+  atualiza-cor-rio
 
+  print-log-saldo-prefeito
+  print-log-poluicao-global
   tick
+
+  if stop? [
+    user-message "Global pollution has reached a value equal to or greater than 100%"
+    stop
+  ]
 end
 
 to atualiza-rodada
@@ -500,6 +601,8 @@ to atualiza-rodada
   zera-parcelas
   zera-producao-e-poluicao
   zera-quantidade-produtos-vendidos
+
+  set reducao-poluicao 0
 
   ;; apaga na interface as imagens nas parcelas
   clear-drawing
@@ -525,6 +628,9 @@ to zera-parcelas
 
       set p (p + 1)
     ]
+
+    ;; zera a quantidade de produtos vendidos
+    set quant-semente-plantada 0 ;; varia de 0 a 6
   ]
 end
 
@@ -564,7 +670,7 @@ end
 
 to compra-venda-produtos
   compra-semente
-  ;; compra-agrotoxico
+  compra-agrotoxico
   ;; compra-fertilizante
   ;; compra-maquina
 end
@@ -573,6 +679,7 @@ to compra-semente
   ;; cada agricultor deve comprar pelo menos 1 semente dos 3 tipos
   ;; TODO Permitir agricultores plantarem mais de um tipo de semente em suas plantações
   ask agricultores [
+
     let s random 3 ;; semente aleatória
     if type-of-seed = "vegetable" [
       set s 0
@@ -585,49 +692,259 @@ to compra-semente
     ]
 
     let p (random 6) + 1 ;; quantidade aleatória de parcelas (de 1 a 6)
-    let valorsem 0
+    let valor-sem 0 ;; valor da semente
+
+    if use-all-farm-land? [
+      set p 6
+    ]
 
     ask empresarios with [setor = "s"] [
       ;; valor da semente
-      set valorsem (item 0 (table:get produtos s))
+      set valor-sem (item 0 (table:get produtos s))
     ]
 
-    ;; verificar antes se agricultor tem saldo para comprar
-    ;; se saldo do agricultor for maior que o valor da semente, então COMPRA
-    if saldo > p * valorsem [
-      ask empresarios with [setor = "s"] [
-        ;; atualiza o produção (ganhos) do empresario, após a venda
-        set producao (producao + p * valorsem)
+    ifelse set-farmer-0? and id = 0 [
+      realiza-compra-sementes-agricultor-0
+    ][
 
-        let quantsem (item 1 (table:get produtos s))
-
-        ;; atualiza a quantidade de produtos vendido
-        ;; valor do produto não pode alterar
-        table:put produtos s (list valorsem (quantsem + p))
+      ;; movimentação do agente agricultor
+      if enable-agent-movement? [
+        ;; caminha até o empresário de sementes
+        move-agricultor id (item id caminho-agricultores-para-empresario-semente)
       ]
 
-      print-log (word "agricultor " id " comprou " p " saco(s) de " (item s sementes) " ($" valorsem ")" " por R$ " (p * valorsem))
-
-      ;; atualiza o saldo do agricultor
-      set saldo (saldo - p * valorsem)
-
-      let i 0
-      while [i < p] [ ;; atualiza nas parcelas qual semente foi comprada
-        table:put parcelas (word "p" i "s") s
-        set i i + 1
+      ;; verificar antes se agricultor tem saldo para comprar
+      ;; se saldo do agricultor for maior, então COMPRA
+      if saldo > p * valor-sem [
+        ;; [identificador indice-parcela quant-produto num-parcelas-ocupadas valor-produto produto]
+        agricultor-realiza-compra-sementes id 0 p p valor-sem s
       ]
     ]
   ]
 end
 
+to realiza-compra-sementes-agricultor-0
+  ask agricultores with [id = 0] [
+    ;; movimentação do agente agricultor
+    if farmer-0-vegetable + farmer-0-rice + farmer-0-soy > 0 [
+      if enable-agent-movement? [
+        ;; caminha até o empresário de sementes
+        move-agricultor id (item id caminho-agricultores-para-empresario-semente)
+      ]
+    ]
+
+    let valor-hortalica 0
+    let valor-arroz 0
+    let valor-soja 0
+
+    ask empresarios with [setor = "s"] [
+      set valor-hortalica (item 0 (table:get produtos 0))
+      set valor-arroz (item 0 (table:get produtos 1))
+      set valor-soja (item 0 (table:get produtos 2))
+    ]
+
+    let i 0 ;; indice das parcelas (varia de 0 a 5)
+    let parcelas-sobrando 6
+
+    ;; 1- COMPRA DE HORTALIÇA
+
+    ;; verificar antes se agricultor tem saldo para comprar
+    ;; se saldo do agricultor for maior, então COMPRA HORTALIÇAS
+    if farmer-0-vegetable > 0 and saldo > farmer-0-vegetable * valor-hortalica [
+      ;; [identificador indice-parcela quant-produto num-parcelas-ocupadas valor-produto produto]
+      agricultor-realiza-compra-sementes 0 0 farmer-0-vegetable farmer-0-vegetable valor-hortalica 0
+    ]
+
+    ;; 2- COMPRA DE ARROZ
+    set parcelas-sobrando parcelas-sobrando - farmer-0-vegetable
+    if farmer-0-rice > parcelas-sobrando [
+      set farmer-0-rice parcelas-sobrando
+    ]
+
+    ;; ...então COMPRA ARROZ
+    if farmer-0-rice > 0 and saldo > farmer-0-rice * valor-arroz [
+      ;; [identificador indice-parcela quant-produto num-parcelas-ocupadas valor-produto produto]
+      agricultor-realiza-compra-sementes 0 farmer-0-vegetable farmer-0-rice (farmer-0-vegetable + farmer-0-rice) valor-arroz 1
+    ]
+
+    ;; 3- COMPRA DE SOJA
+    set parcelas-sobrando parcelas-sobrando - farmer-0-rice
+    if farmer-0-soy > parcelas-sobrando [
+      set farmer-0-soy parcelas-sobrando
+    ]
+
+    ;; ...então COMPRA SOJA
+    if farmer-0-soy > 0 and saldo > farmer-0-soy * valor-soja [
+      ;; [identificador indice-parcela quant-produto num-parcelas-ocupadas valor-produto produto]
+      agricultor-realiza-compra-sementes 0 (farmer-0-rice + farmer-0-vegetable) farmer-0-soy (farmer-0-vegetable + farmer-0-rice + farmer-0-soy) valor-soja 2
+    ]
+  ]
+end
+
+to agricultor-realiza-compra-sementes [identificador indice-parcela quant-produto num-parcelas-ocupadas valor-produto produto]
+
+  agricultor-realiza-compra identificador indice-parcela "s" quant-produto num-parcelas-ocupadas valor-produto produto
+
+  ask agricultores with [id = identificador] [
+    ;; atualiza a quantidade de sementes vendidas
+    set quant-semente-plantada quant-semente-plantada + quant-produto
+
+    print-log-compra-de-semente id quant-produto produto valor-produto
+  ]
+end
+
+to agricultor-realiza-compra [identificador indice-parcela setor-empr quant-produto num-parcelas-ocupadas valor-produto produto]
+  ask agricultores with [id = identificador] [
+    empresario-realiza-venda setor-empr quant-produto produto
+
+    ;; atualiza o saldo do agricultor
+    set saldo precision (saldo - quant-produto * valor-produto) 2
+
+    ;; atualiza nas parcelas qual produto foi comprada
+    while [indice-parcela < num-parcelas-ocupadas] [
+      table:put parcelas (word "p" indice-parcela setor-empr) produto
+      set indice-parcela indice-parcela + 1
+    ]
+  ]
+end
+
+to empresario-realiza-venda [setor-empr quant-produto produto]
+  ask empresarios with [setor = setor-empr] [
+    let valor-produto (item 0 (table:get produtos produto))
+
+    ;; atualiza a produção (ganhos) do empresario, após a venda
+    set producao (producao + quant-produto * valor-produto)
+
+    let quant-produtos (item 1 (table:get produtos produto))
+
+    ;; atualiza a quantidade de produtos vendidos: quantidade atual + as novas vendas
+    ;; valor do produto não pode alterar
+    table:put produtos produto (list valor-produto (quant-produtos + quant-produto))
+  ]
+end
+
 to compra-agrotoxico
-  ;; cada agricultor pode comprar ou não agrotóxico
-  let continua random 2
-  if continua = 1 [
+  ask agricultores [
+    ifelse set-farmer-0? and id = 0 [
+      realiza-compra-agrotoxicos-agricultor-0
+    ][
+      if type-of-agrotoxic != "no-agrotoxic" [
+        ;; movimentação do agente agricultor
+        if enable-agent-movement? [
+          ;; caminha até o empresário de agrotóxico
+          move-agricultor id (item id caminho-agricultores-para-empresario-agrotoxico)
+        ]
 
-    ask agricultores [
-      ;; seleciona agricultores aleatórios
+        let a random 3 ;; agrotóxico aleatório
 
+        if type-of-agrotoxic = "common" [
+          set a 0
+        ]
+        if type-of-agrotoxic = "premium" [
+          set a 1
+        ]
+        if type-of-agrotoxic = "super-premium" [
+          set a 2
+        ]
+
+        let p random (quant-semente-plantada + 1) ;; quantidade aleatória de parcelas (de 0 a 6)
+        let valor-agro 0 ;; valor do agrotóxico
+
+        if use-all-farm-land? [
+          set p quant-semente-plantada
+        ]
+
+        ;; cada agricultor pode comprar ou não agrotóxico
+        if p != 0 [
+          ask empresarios with [setor = "a"] [
+            ;; valor do agrotóxico
+            set valor-agro (item 0 (table:get produtos a))
+          ]
+
+          ;; verificar antes se agricultor tem saldo para comprar
+          ;; se saldo do agricultor for maior, então COMPRA
+          if saldo > p * valor-agro [
+            ;; [identificador indice-parcela quant-produto num-parcelas-ocupadas valor-produto produto]
+            agricultor-realiza-compra-agrotoxicos id 0 p p valor-agro a
+          ]
+        ]
+      ]
+    ]
+  ]
+end
+
+to agricultor-realiza-compra-agrotoxicos [identificador indice-parcela quant-produto num-parcelas-ocupadas valor-produto produto]
+
+  agricultor-realiza-compra identificador indice-parcela "a" quant-produto num-parcelas-ocupadas valor-produto produto
+
+  ask agricultores with [id = identificador] [
+    ;; [ identificador quantidade agrotoxico valor ]
+    print-log-compra-de-agrotixico id quant-produto produto valor-produto
+  ]
+end
+
+to realiza-compra-agrotoxicos-agricultor-0
+  ask agricultores with [id = 0] [
+
+    if farmer-0-common-agrotoxic + farmer-0-premium-agrotoxic + farmer-0-super-premium-agrotoxic > 0 and quant-semente-plantada > 0 [
+      ;; movimentação do agente agricultor
+      if enable-agent-movement? [
+        ;; caminha até o empresário de agrotóxico
+        move-agricultor id (item id caminho-agricultores-para-empresario-agrotoxico)
+      ]
+    ]
+
+    let valor-agro-comum 0
+    let valor-agro-premium 0
+    let valor-agro-super-premium 0
+
+    ask empresarios with [setor = "a"] [
+      set valor-agro-comum (item 0 (table:get produtos 0))
+      set valor-agro-premium (item 0 (table:get produtos 1))
+      set valor-agro-super-premium (item 0 (table:get produtos 2))
+    ]
+
+    let i 0 ;; indice das parcelas (varia de 0 a 5)
+    let parcelas-sobrando quant-semente-plantada
+
+    ;; farmer-0-common-agrotoxic
+    ;; farmer-0-premium-agrotoxic
+    ;; farmer-0-super-premium-agrotoxic
+
+    ;; 1- COMPRA DE AGROTÓXICO COMUM
+    if farmer-0-common-agrotoxic > parcelas-sobrando [
+      set farmer-0-common-agrotoxic parcelas-sobrando
+    ]
+
+    ;; verificar antes se agricultor tem saldo para comprar
+    ;; se saldo do agricultor for maior, então COMPRA AGROTÓXICO COMUM
+    if farmer-0-common-agrotoxic > 0 and saldo > farmer-0-common-agrotoxic * valor-agro-comum [
+      ;; [identificador indice-parcela quant-produto num-parcelas-ocupadas valor-produto produto]
+      agricultor-realiza-compra-agrotoxicos 0 0 farmer-0-common-agrotoxic farmer-0-common-agrotoxic valor-agro-comum 0
+    ]
+
+    ;; 2- COMPRA DE AGROTÓXICO PREMIUM
+    set parcelas-sobrando parcelas-sobrando - farmer-0-common-agrotoxic
+    if farmer-0-premium-agrotoxic > parcelas-sobrando [
+      set farmer-0-premium-agrotoxic parcelas-sobrando
+    ]
+
+    ;; ...então COMPRA PREMIUM
+    if farmer-0-premium-agrotoxic > 0 and saldo > farmer-0-premium-agrotoxic * valor-agro-premium [
+      ;; [identificador indice-parcela quant-produto num-parcelas-ocupadas valor-produto produto]
+      agricultor-realiza-compra-agrotoxicos 0 farmer-0-common-agrotoxic farmer-0-premium-agrotoxic (farmer-0-common-agrotoxic + farmer-0-premium-agrotoxic) valor-agro-premium 1
+    ]
+
+    ;; 3- COMPRA DE AGROTÓXICO SUPER-PREMIUM
+    set parcelas-sobrando parcelas-sobrando - farmer-0-premium-agrotoxic
+    if farmer-0-super-premium-agrotoxic > parcelas-sobrando [
+      set farmer-0-super-premium-agrotoxic parcelas-sobrando
+    ]
+
+    ;; ...então COMPRA SUPER-PREMIUM
+    if farmer-0-super-premium-agrotoxic > 0 and saldo > farmer-0-super-premium-agrotoxic * valor-agro-super-premium [
+      ;; [identificador indice-parcela quant-produto num-parcelas-ocupadas valor-produto produto]
+      agricultor-realiza-compra-agrotoxicos 0 (farmer-0-common-agrotoxic + farmer-0-premium-agrotoxic) farmer-0-super-premium-agrotoxic (farmer-0-common-agrotoxic + farmer-0-premium-agrotoxic + farmer-0-super-premium-agrotoxic) valor-agro-super-premium 2
     ]
   ]
 end
@@ -664,18 +981,28 @@ to planta
       if s != "-" [ ;; verifica se tem semente comprada para esta parcela
         set plantou true
 
+        ;; 1- semente
         let x (item 0 (table:get posicao-parcelas (word "a" id "p" p)))
         let y (item 1 (table:get posicao-parcelas (word "a" id "p" p)))
 
         ;; realiza a plantação
         bitmap:copy-to-drawing (bitmap:import (item s sementes-imagens)) x y
+
+
+        ;; 2- agrotóxico
+        let a table:get parcelas (word "p" p "a")
+        if a != "-" [ ;; verifica se tem agrotóxico comprado para esta parcela
+
+          ;; coloca o agrotóxico
+          bitmap:copy-to-drawing (bitmap:import (item a agrotoxico-imagens)) x + 24 y
+        ]
       ]
 
       set p p + 1
     ]
 
     if plantou [
-      print-log (word "agricultor " id " finalizou a plantação!")
+      print-log (word "Agricultor " id " finalizou a plantação!")
     ]
   ]
 end
@@ -690,7 +1017,18 @@ to atualiza-producao-agricultores
       let m table:get parcelas (word "p" p "m")
 
       if s != "-" [ ;; verifica se tem semente comprada para esta parcela
-        let ganho-parcela table:get tabela-produtividade (word s a f m)
+        ;; considera sempre a hortaliça (semente de referência)
+        let ganho-parcela table:get tabela-produtividade (word 0 a f m)
+
+        ;; a produtividade só muda quando arroz ou soja foram compradas junto com algum tipo de agrotóxico
+        if a != "-" [ ;; verifica se tem semente comprada para esta parcela
+          if s = 1 [  ;; se a semente é arroz
+            set ganho-parcela ganho-parcela * 2 ;; produção é duplicada
+          ]
+          if s = 2 [ ;; se a semente é soja
+            set ganho-parcela ganho-parcela * 3 ;; produção é triplicada
+          ]
+        ]
 
         ;; atualiza a produtividade da parcela
         table:put parcelas (word "p" p "producao") ganho-parcela
@@ -706,13 +1044,13 @@ end
 
 to atualiza-saldo-agricultores
   ask agricultores [
-    set saldo saldo + producao
+    set saldo precision (saldo + producao) 2
   ]
 end
 
 to atualiza-saldo-empresarios
   ask empresarios [
-    set saldo saldo + producao
+    set saldo precision (saldo + producao) 2
   ]
 end
 
@@ -738,22 +1076,356 @@ to atualiza-poluicao-agricultores
   ]
 end
 
+to fiscaliza
+  ifelse fine? [
+    ;; movimentação do agente fiscal
+    if enable-agent-movement? [
+      ;; caminha até os todos empresários
+      move-fiscal-so-ida caminho-fiscal-to-businessman
+
+      ;; caminha até os agricultores
+      let i 0
+      while [i < number-farmer] [
+        if enable-agent-movement? [
+          move-fiscal (item i caminho-fiscal-to-farmers)
+        ]
+        set i i + 1
+      ]
+    ]
+
+    let total-multas 0 ;; TODO valor da multa vai para a prefeitura?
+
+    ;; Aplicação de multa para os agricultores
+    ask fiscais [
+      ask agricultores [
+        let p poluicao / 6 ;; média de poluicao de todas as 6 parcelas de terra do agricultor
+        let multa 0
+        let tipo-multa 0
+        let peso 1
+
+        if p >= 90 and p < 120 [
+          set multa p
+          set tipo-multa 1
+        ]
+        if p >= 120 and p < 200 [
+          set peso 2
+          set multa peso * p
+          set tipo-multa 2
+        ]
+        if p >= 200 [
+          set peso 3
+          set multa peso * p
+          set tipo-multa 3
+        ]
+
+        set saldo precision (saldo - multa) 2
+        set total-multas total-multas + multa
+
+        if tipo-multa != 0 [
+          print-log (word "Multa (" (item tipo-multa tipos-multa) ") para agricultor " id " no valor de $"
+            multa " (" peso " * " p ")" )
+        ]
+      ]
+
+      ;; Aplicação de multa para os empresários
+      ask empresarios [
+        let p poluicao
+        let multa 0
+        let tipo-multa 0
+        let peso 1
+
+        if p >= 90 and p < 120 [
+          set multa p
+          set tipo-multa 1
+        ]
+        if p >= 120 and p < 200 [
+          set peso 2
+          set multa peso * p
+          set tipo-multa 2
+        ]
+        if p >= 200 [
+          set peso 3
+          set multa peso * p
+          set tipo-multa 3
+        ]
+
+        set saldo precision (saldo - multa) 2
+        set total-multas total-multas + multa
+
+        if tipo-multa != 0 [
+          print-log (word "Multa (" (item tipo-multa tipos-multa) ") para empresário de " (table:get setores setor)
+            " no valor de $" multa " (" peso " * " p ")" )
+        ]
+      ]
+    ]
+
+    ;; atualiza o saldo da prefeitura com as multas
+    ask prefeitos [
+      set saldo precision (saldo + total-multas) 2
+    ]
+
+    if total-multas != 0 [ print-log "" ]
+
+    print-log "Fiscal finalizou a fiscalização!\n"
+
+  ][
+    print-log "Fiscal não realizou a fiscalização!\n"
+  ]
+end
+
+to paga-imposto
+  let total-imposto 0
+
+  ask agricultores [
+    let pr producao
+    let imposto 10
+    let faixa 0
+
+    if pr > 0 and pr <= 200 [
+      set imposto 0.1 * pr
+      set faixa 10
+    ]
+    if pr > 200 [
+      set imposto 0.3 * pr
+      set faixa 30
+    ]
+
+    set saldo precision (saldo - imposto) 2
+    set total-imposto total-imposto + imposto
+
+    let msg (word "Imposto do agricultor " id ": $" imposto)
+
+    ifelse faixa = 0 [
+      print-log msg
+    ][
+      print-log (word msg " (" faixa "% do ganho de $" producao ")")
+    ]
+  ]
+
+  print-log ""
+
+  ask empresarios [
+    let pr producao
+    let imposto 10
+    let faixa 0
+
+    if pr > 0 and pr <= 200 [
+      set imposto 0.1 * pr
+      set faixa 10
+    ]
+    if pr > 200 [
+      set imposto 0.3 * pr
+      set faixa 30
+    ]
+
+    set saldo precision (saldo - imposto) 2
+    set total-imposto total-imposto + imposto
+
+    let msg (word "Imposto do empresario de " (table:get setores setor) ": $" imposto)
+
+    ifelse faixa = 0 [
+      print-log msg
+    ][
+      print-log (word msg " (" faixa "% do ganho de $" producao ")")
+    ]
+  ]
+
+  print-log ""
+
+  ;; atualiza o saldo da prefeitura com os impostos
+  ask prefeitos [
+    set saldo precision (saldo + total-imposto) 2
+  ]
+end
+
+to atualiza-poluicao-global
+  let poluicao-agricultores 0
+  let poluicao-empresarios 0
+  let poluicao-rodada 0
+
+  ask agricultores [
+    let p 0 ;; poluicao
+    set p poluicao / 6 / 10000
+    set poluicao-agricultores poluicao-agricultores + p
+  ]
+
+  ask empresarios [
+    let p 0 ;; poluicao
+    set p poluicao / 10000
+    set poluicao-empresarios poluicao-empresarios + p
+  ]
+
+  ;; poluicao da rodada atual
+  set poluicao-rodada poluicao-agricultores + poluicao-empresarios
+
+  set global-pollution global-pollution / 100
+
+  ;; poluicao global sem a redução das medidas de prevenção
+  set global-pollution (global-pollution + poluicao-rodada) * 100
+
+  set global-pollution precision ( global-pollution ) 2
+
+  ;; atualiza na interface a poluição global do ambiente
+  ask patch 0 4 [
+    set plabel (word global-pollution "%")
+  ]
+
+
+  ifelse global-pollution >= 100 [
+    set stop? true
+  ][
+    set stop? false
+  ]
+
+end
+
+to atualiza-poluicao-global-apos-tratamento
+  ;; poluicao global após a aplicação das medidas de prevenção
+  set global-pollution global-pollution * (1 - reducao-poluicao)
+
+  set global-pollution precision ( global-pollution ) 2
+end
+
+to atualiza-cor-rio
+  ;; teste da cor do rio
+  ;;if global-pollution < 100 [
+  ;;  set global-pollution global-pollution + 1
+  ;;]
+
+  ifelse global-pollution < 20 [
+    muda-cor-rio -0.5 0
+  ][
+    let x 0
+
+    if global-pollution >= 20 and global-pollution <= 39.99 [
+      set x 0.66
+    ]
+    if global-pollution >= 40 and global-pollution <= 59.99 [
+      set x 1.32
+    ]
+    if global-pollution >= 60 and global-pollution <= 69.99 [
+      set x 1.98
+    ]
+    if global-pollution >= 70 and global-pollution <= 79.99 [
+      set x 2.64
+    ]
+    if global-pollution >= 80 and global-pollution <= 89.99 [
+      set x 3.3
+    ]
+    if global-pollution >= 90 [
+      set x 4
+    ]
+
+    muda-cor-rio x 0.3
+  ]
+end
+
+to muda-cor-rio [tonalidade variacao]
+  ask patches with [pycor > -3 and pycor < 12] [
+    set pcolor blue - tonalidade - random-float variacao
+  ]
+
+  muda-cor-ponte
+end
+
+to aplica-medidas-prevencao-poluicao
+  ask prefeitos [
+    ifelse type-of-pollution-treatment != "no-treatment" [
+
+      ;; movimentação do agente prefeito
+      if enable-agent-movement? [
+        move-prefeito caminho-prefeito
+      ]
+
+      let t random 3 ;; medida aleatória
+      set reducao-poluicao 0
+      let custo 0
+
+      if type-of-pollution-treatment = "water-treatment" [
+        set t 0
+      ]
+      if type-of-pollution-treatment = "waste-treatment" [
+        set t 1
+      ]
+      if type-of-pollution-treatment = "sewage-treatment" [
+        set t 2
+      ]
+
+      if t = 0 [
+        ifelse global-pollution <= 20 [
+          set custo 800
+        ][
+          set custo global-pollution - 20 + 800
+        ]
+      ]
+      if t = 1 [
+        ifelse global-pollution <= 20 [
+          set custo 1600
+        ][
+          set custo global-pollution - 20 + 1600
+        ]
+      ]
+      if t = 2 [
+        ifelse global-pollution <= 20 [
+          set custo 2400
+        ][
+          set custo global-pollution - 20 + 2400
+        ]
+      ]
+
+      ifelse saldo > custo [
+        set saldo precision (saldo - custo) 2
+
+        if t = 0 [
+          set reducao-poluicao 0.05
+          print-log (word "Tratamento de " (item t medida-prevencao) " realizado (redução de " (reducao-poluicao * 100) "%)! \n")
+        ]
+        if t = 1 [
+          set reducao-poluicao 0.1
+          print-log (word "Tratamento de " (item t medida-prevencao) " realizado (redução de " (reducao-poluicao * 100) "%)! \n")
+        ]
+        if t = 2 [
+          set reducao-poluicao 0.15
+          print-log (word "Tratamento de " (item t medida-prevencao) " realizado (redução de " (reducao-poluicao * 100) "%)! \n")
+        ]
+      ][
+        print-log (word "Prefeito sem saldo para aplicar medida de prevenção (tratamento de " (item t medida-prevencao) ")! \n")
+      ]
+    ][
+      print-log "Nenhum medida de tratamento da poluição foi aplicada! \n"
+    ]
+  ]
+end
+
+
 to print-log-saldo-agricultores
   print-log ""
   ask agricultores [
-    print-log (word "Saldo atual: agricultor " id ": " saldo)
+    print-log (word "Saldo atual do agricultor " id ": $" saldo)
+  ]
+  print-log ""
+end
+
+to print-log-saldo-prefeito
+  ;;print-log ""
+  ask prefeitos [
+    print-log (word "Saldo atual da prefeitura: $" saldo)
   ]
   print-log ""
 end
 
 to print-log-saldo
-  print-log ""
+  ;; print-log ""
   ask agricultores [
-    print-log (word "Saldo atual: agricultor " id ": " saldo)
+    print-log (word "Saldo atual do agricultor " id ": $" saldo)
   ]
   print-log ""
   ask empresarios [
-    print-log (word "Saldo atual: empresário de "  (table:get setores setor) ": " saldo)
+    print-log (word "Saldo atual do empresário de "  (table:get setores setor) ": $" saldo)
+  ]
+  print-log ""
+  ask prefeitos [
+    print-log (word "Saldo atual da prefeitura: $" saldo)
   ]
   print-log ""
 end
@@ -762,7 +1434,7 @@ to print-log-producao-agricultores
   print-log ""
   ask agricultores [
     if producao > 0 [
-      print-log (word "Ganhos do agricultor " id ": " producao)
+      print-log (word "Ganhos do agricultor " id ": $" producao)
     ]
   ]
   print-log ""
@@ -772,7 +1444,7 @@ to print-log-producao-empresarios
   ;; print-log ""
   ask empresarios [
     if producao > 0 [
-      print-log (word "Ganhos do empresário de "  (table:get setores setor) ": " producao)
+      print-log (word "Ganhos do empresário de "  (table:get setores setor) ": $" producao)
     ]
   ]
   print-log ""
@@ -789,36 +1461,113 @@ end
 to print-log-poluicao-empresarios
   ;; print-log ""
   ask empresarios [
-    print-log (word "Poluição do empresário de "  (table:get setores setor) ": " poluicao)
+    if poluicao > 0 [
+      print-log (word "Poluição do empresário de "  (table:get setores setor) ": " poluicao )
+    ]
   ]
   print-log ""
 end
 
-to atualiza-cor-rio
-  let x 0
-  if global-polution < 20 [
-    set pcolor blue + 0.5
+to print-log-poluicao-global
+  print-log (word "Poluição global: " global-pollution "%")
+  print-log ""
+end
+
+to print-log-compra-de-semente [ identificador quantidade semente valor ]
+  ;; print-log (word "Agricultor " id " comprou " p " saco(s) de " (item s tipos-semente) " ($" valor-sem ")" " por $" (p * valor-sem))
+  print-log (word "Agricultor " identificador " comprou " quantidade " saco(s) de " (item semente tipos-semente) " ($" valor ")" " por $" (quantidade * valor))
+end
+
+to print-log-compra-de-agrotixico [ identificador quantidade agrotoxico valor ]
+  ;; print-log (word "Agricultor " id " comprou " p " agrotóxico(s) " (item a tipos-agrotoxico) " ($" valor-agro ")" " por $" (p * valor-agro))
+  print-log (word "Agricultor " identificador " comprou " quantidade " agrotóxico(s) " (item agrotoxico tipos-agrotoxico) " ($" valor ") por $" (quantidade * valor))
+end
+
+
+to move-prefeito [lista]
+  let tam length lista
+  let i  0
+
+  ask prefeitos [
+    while [i  <= tam - 1] [
+      let x item 0 (item i lista)
+      let y item 1 (item i lista)
+      setxy x y
+      set i i + 1
+      wait tempo-espera-movimentacao
+      set tempo-espera-movimentacao 0.1 / agent-movement-speed
+    ]
+
+    set i tam - 1
+    while [i >= 0] [
+      let x item 0 (item i lista)
+      let y item 1 (item i lista)
+      setxy x y
+      set i i - 1
+      wait tempo-espera-movimentacao
+      set tempo-espera-movimentacao 0.1 / agent-movement-speed
+    ]
   ]
-  if global-polution >= 20 and global-polution <= 39 [
-    set x 0.66
+end
+
+to move-fiscal [lista]
+  move-fiscal-so-ida lista
+
+  let tam length lista
+  let i  0
+
+  ask fiscais [
+    set i tam - 1
+    while [i >= 0] [
+      let x item 0 (item i lista)
+      let y item 1 (item i lista)
+      setxy x y
+      set i i - 1
+      wait tempo-espera-movimentacao
+      set tempo-espera-movimentacao 0.1 / agent-movement-speed
+    ]
   ]
-  if global-polution >= 40 and global-polution <= 59 [
-    set x 1.32
+end
+
+to move-fiscal-so-ida [lista]
+  let tam length lista
+  let i  0
+
+  ask fiscais [
+    while [i  <= tam - 1] [
+      let x item 0 (item i lista)
+      let y item 1 (item i lista)
+      setxy x y
+      set i i + 1
+      wait tempo-espera-movimentacao
+      set tempo-espera-movimentacao 0.1 / agent-movement-speed
+    ]
   ]
-  if global-polution >= 60 and global-polution <= 69 [
-    set x 1.98
-  ]
-  if global-polution >= 70 and global-polution <= 79 [
-    set x 2.64
-  ]
-  if global-polution >= 80 and global-polution <= 89 [
-    set x 3.3
-  ]
-  if global-polution >= 90 and global-polution <= 100 [
-    set x 3.96
-  ]
-  ask patches with [pycor > -3 and pycor < 12] [
-    set pcolor blue + 0.5 - x - random-float 0.25
+end
+
+to move-agricultor [identificador lista]
+  let tam length lista
+  let i  0
+
+  ask agricultores with [id = identificador] [
+    while [i  <= tam - 1] [
+      let x item 0 (item i lista)
+      let y item 1 (item i lista)
+      setxy x y
+      set i i + 1
+      wait tempo-espera-movimentacao
+      set tempo-espera-movimentacao 0.1 / agent-movement-speed
+    ]
+
+    set i tam - 1
+    while [i >= 0] [
+      let x item 0 (item i lista)
+      let y item 1 (item i lista)
+      setxy x y
+      set i i - 1
+      wait tempo-espera-movimentacao
+      set tempo-espera-movimentacao 0.1 / agent-movement-speed
+    ]
   ]
 end
 @#$#@#$#@
@@ -850,10 +1599,10 @@ ticks
 30.0
 
 BUTTON
-20
-39
-83
-72
+27
+32
+90
+65
 NIL
 setup
 NIL
@@ -867,11 +1616,11 @@ NIL
 1
 
 BUTTON
-102
-39
-165
-72
-NIL
+97
+13
+172
+46
+go once
 go
 NIL
 1
@@ -884,9 +1633,9 @@ NIL
 1
 
 SLIDER
-20
+19
 93
-192
+191
 126
 number-farmer
 number-farmer
@@ -899,94 +1648,50 @@ NIL
 HORIZONTAL
 
 CHOOSER
-21
+20
 186
-159
+158
 231
 type-of-agrotoxic
 type-of-agrotoxic
 "random" "common" "premium" "super-premium" "no-agrotoxic"
-0
+3
 
 CHOOSER
-22
+21
 285
-160
+159
 330
 type-of-machine
 type-of-machine
 "random" "combination-1" "combination-2" "combination-3" "no-machine"
-0
+4
 
 CHOOSER
-21
+20
 236
-159
+158
 281
 type-of-fertilizer
 type-of-fertilizer
 "random" "commum" "premium" "super-premium" "no-fertilizer"
-0
+4
 
 CHOOSER
-20
+19
 137
-158
+157
 182
 type-of-seed
 type-of-seed
 "random" "vegetable" "rice" "soy"
-2
-
-SWITCH
-21
-456
-175
-489
-water-treatment?
-water-treatment?
-0
-1
--1000
-
-SWITCH
-21
-493
-176
-526
-waste-treatment?
-waste-treatment?
-0
-1
--1000
-
-SWITCH
-21
-530
-185
-563
-sewage-treatment?
-sewage-treatment?
-0
-1
--1000
+3
 
 MONITOR
-944
-11
-1038
-56
-global-polution
-(word global-polution \"%\")
-17
-1
-11
-
-MONITOR
-833
-11
-937
-56
+852
+12
+956
+57
 simulation-round
 simulation-round
 17
@@ -994,10 +1699,10 @@ simulation-round
 11
 
 MONITOR
-833
-85
-990
-130
+852
+67
+1009
+112
 farmer-0-account-balance
 [saldo] of agricultores with [id = 0]
 17
@@ -1005,10 +1710,10 @@ farmer-0-account-balance
 11
 
 MONITOR
-833
-135
-990
-180
+852
+117
+1009
+162
 farmer-1-account-balance
 [saldo] of agricultores with [id = 1]
 17
@@ -1016,10 +1721,10 @@ farmer-1-account-balance
 11
 
 MONITOR
-833
-185
-990
-230
+852
+167
+1009
+212
 farmer-2-account-balance
 [saldo] of agricultores with [id = 2]
 17
@@ -1027,10 +1732,10 @@ farmer-2-account-balance
 11
 
 MONITOR
-833
-234
-990
-279
+852
+216
+1009
+261
 farmer-3-account-balance
 [saldo] of agricultores with [id = 3]
 17
@@ -1038,10 +1743,10 @@ farmer-3-account-balance
 11
 
 MONITOR
-833
-284
-990
-329
+852
+266
+1009
+311
 farmer-4-account-balance
 [saldo] of agricultores with [id = 4]
 17
@@ -1049,10 +1754,10 @@ farmer-4-account-balance
 11
 
 MONITOR
-834
-333
-991
-378
+853
+315
+1010
+360
 farmer-5-account-balance
 [saldo] of agricultores with [id = 5]
 17
@@ -1060,10 +1765,10 @@ farmer-5-account-balance
 11
 
 MONITOR
-836
-404
-1052
-449
+852
+377
+1059
+422
 businessman-seeds-account-balance
 [saldo] of empresarios with [setor = \"s\"]
 17
@@ -1071,10 +1776,10 @@ businessman-seeds-account-balance
 11
 
 MONITOR
-836
-453
-1071
-498
+852
+426
+1060
+471
 businessman-agrotoxic-account-balance
 [saldo] of empresarios with [setor = \"a\"]
 17
@@ -1082,10 +1787,10 @@ businessman-agrotoxic-account-balance
 11
 
 MONITOR
-836
-502
-1064
-547
+852
+475
+1061
+520
 businessman-fertilizer-account-balance
 [saldo] of empresarios with [setor = \"f\"]
 17
@@ -1093,102 +1798,417 @@ businessman-fertilizer-account-balance
 11
 
 MONITOR
-837
-551
-1065
-596
+853
+524
+1062
+569
 businessman-machine-account-balance
 [saldo] of empresarios with [setor = \"m\"]
 17
 1
 11
 
-MONITOR
-999
-84
-1124
-129
-farmer-0-gain
-[producao] of agricultores with [id = 0]
-17
-1
-11
-
-MONITOR
-999
-135
-1088
-180
-farmer-1-gain
-[producao] of agricultores with [id = 1]
-17
-1
-11
-
-MONITOR
-1000
-185
-1089
-230
-farmer-2-gain
-[producao] of agricultores with [id = 2]
-17
-1
-11
-
-MONITOR
-1001
-234
-1090
-279
-farmer-3-gain
-[producao] of agricultores with [id = 3]
-17
-1
-11
-
-MONITOR
-1001
-283
-1090
-328
-farmer-4-gain
-[producao] of agricultores with [id = 4]
-17
-1
-11
-
-MONITOR
-1002
-333
-1091
-378
-farmer-5-gain
-[producao] of agricultores with [id = 5]
-17
-1
-11
-
 CHOOSER
-22
+21
 334
-160
+159
 379
 use-of-pulverizer
 use-of-pulverizer
-"random" "pulverizer" "no-pulverizer"
-0
+"random" "always" "no-pulverizer"
+2
 
 SWITCH
-23
-401
-131
-434
+22
+430
+130
+463
 fine?
 fine?
 0
 1
 -1000
+
+PLOT
+1071
+248
+1456
+501
+farmers' pollution
+simulation-round
+pollution
+0.0
+20.0
+0.0
+500.0
+true
+false
+"" ""
+PENS
+"farmers" 1.0 0 -16777216 true "" "plot sum [poluicao] of agricultores "
+
+MONITOR
+853
+581
+986
+626
+mayor-account-balance
+[saldo] of prefeitos
+17
+1
+11
+
+PLOT
+1072
+505
+1456
+758
+farmers' gain
+simulation-round
+gain
+0.0
+20.0
+0.0
+500.0
+true
+false
+"" ""
+PENS
+"gain" 1.0 0 -16777216 true "" "plot sum [producao] of agricultores "
+
+SWITCH
+23
+521
+199
+554
+enable-agent-movement?
+enable-agent-movement?
+1
+1
+-1000
+
+PLOT
+1463
+249
+1848
+501
+businessmen's pollution
+simulation-round
+pollution
+0.0
+20.0
+0.0
+500.0
+true
+false
+"" ""
+PENS
+"pollution" 1.0 0 -16777216 true "" "plot sum [poluicao] of empresarios "
+
+PLOT
+1463
+506
+1848
+759
+businessmen's gain
+simulation-round
+gain
+0.0
+20.0
+0.0
+500.0
+true
+false
+"" ""
+PENS
+"gain" 1.0 0 -16777216 true "" "plot sum [producao] of empresarios "
+
+PLOT
+1071
+10
+1455
+242
+global-pollution
+simulation-round
+polution (%)
+0.0
+20.0
+0.0
+100.0
+true
+false
+"" ""
+PENS
+"polution" 1.0 0 -16777216 true "" "plot global-pollution"
+
+CHOOSER
+22
+469
+199
+514
+type-of-pollution-treatment
+type-of-pollution-treatment
+"random" "water-treatment" "waste-treatment" "sewage-treatment" "no-treatment"
+4
+
+SWITCH
+22
+389
+177
+422
+use-all-farm-land?
+use-all-farm-land?
+1
+1
+-1000
+
+TEXTBOX
+20
+604
+202
+649
+Open \"gorim-log.txt\" file in \".\\NetLogo-Gorim\" for simulation details.
+12
+0.0
+1
+
+SWITCH
+24
+669
+156
+702
+set-farmer-0?
+set-farmer-0?
+0
+1
+-1000
+
+SLIDER
+163
+714
+295
+747
+farmer-0-soy
+farmer-0-soy
+0
+6
+0.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+163
+638
+295
+671
+farmer-0-vegetable
+farmer-0-vegetable
+0
+6
+0.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+163
+676
+295
+709
+farmer-0-rice
+farmer-0-rice
+0
+6
+0.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+300
+638
+496
+671
+farmer-0-common-agrotoxic
+farmer-0-common-agrotoxic
+0
+6
+0.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+300
+676
+496
+709
+farmer-0-premium-agrotoxic
+farmer-0-premium-agrotoxic
+0
+6
+0.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+300
+714
+496
+747
+farmer-0-super-premium-agrotoxic
+farmer-0-super-premium-agrotoxic
+0
+6
+0.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+501
+639
+696
+672
+farmer-0-common-fertilizer
+farmer-0-common-fertilizer
+0
+6
+0.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+501
+677
+696
+710
+farmer-0-premium-fertilizer
+farmer-0-premium-fertilizer
+0
+6
+0.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+501
+715
+694
+748
+farmer-0-super-premium-fertilizer
+farmer-0-super-premium-fertilizer
+0
+6
+0.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+700
+640
+889
+673
+farmer-0-combination-1-machine
+farmer-0-combination-1-machine
+0
+6
+0.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+701
+676
+891
+709
+farmer-0-combination-2-machine
+farmer-0-combination-2-machine
+0
+6
+0.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+701
+714
+892
+747
+farmer-0-combination-3-machine
+farmer-0-combination-3-machine
+0
+6
+0.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+702
+751
+836
+784
+farmer-0-pulverizer
+farmer-0-pulverizer
+0
+6
+0.0
+1
+1
+NIL
+HORIZONTAL
+
+BUTTON
+97
+51
+187
+84
+go forever
+go
+T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+0
+
+SLIDER
+23
+558
+198
+591
+agent-movement-speed
+agent-movement-speed
+1
+10
+1.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
