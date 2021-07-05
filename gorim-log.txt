@@ -1,0 +1,107 @@
+
+
+----------- Simulação: 07:48:22.754 PM 04-jul-2021 -----------
+
+SETUP: Criação do Ambiente e dos Agentes... Feito! 
+
+******************************
+*********  RODADA 1  *********
+******************************
+
+ETAPA 1
+
+Saldo atual do agricultor 1: $600
+Saldo atual do agricultor 3: $600
+Saldo atual do agricultor 4: $600
+Saldo atual do agricultor 5: $600
+Saldo atual do agricultor 2: $600
+Saldo atual do agricultor 0: $600
+
+Saldo atual do empresário de maquinas: $100
+Saldo atual do empresário de sementes: $100
+Saldo atual do empresário de fertilizantes: $100
+Saldo atual do empresário de agrotoxicos: $100
+
+Saldo atual da prefeitura: $1000
+
+Poluição global: 20%
+
+Agricultor 3 comprou 5 saco(s) de soja ($30) por $150
+Agricultor 2 comprou 6 saco(s) de soja ($30) por $180
+Agricultor 5 comprou 1 saco(s) de soja ($30) por $30
+Agricultor 4 comprou 5 saco(s) de soja ($30) por $150
+Agricultor 1 comprou 1 saco(s) de soja ($30) por $30
+Agricultor 4 comprou 5 agrotóxico(s) super premium ($30) por $150
+Agricultor 2 comprou 4 agrotóxico(s) super premium ($30) por $120
+Agricultor 3 comprou 2 agrotóxico(s) super premium ($30) por $60
+
+Saldo atual do agricultor 0: $600
+Saldo atual do agricultor 1: $570
+Saldo atual do agricultor 3: $390
+Saldo atual do agricultor 2: $300
+Saldo atual do agricultor 4: $300
+Saldo atual do agricultor 5: $570
+
+Ganhos do empresário de sementes: $540
+Ganhos do empresário de agrotoxicos: $330
+
+Poluição do empresário de agrotoxicos: 11
+Poluição do empresário de sementes: 54
+
+Agricultor 2 finalizou a plantação!
+Agricultor 1 finalizou a plantação!
+Agricultor 3 finalizou a plantação!
+Agricultor 4 finalizou a plantação!
+Agricultor 5 finalizou a plantação!
+
+Ganhos do agricultor 2: $1220
+Ganhos do agricultor 3: $630
+Ganhos do agricultor 1: $10
+Ganhos do agricultor 5: $10
+Ganhos do agricultor 4: $1500
+
+Poluição do agricultor 1: 30
+Poluição do agricultor 5: 30
+Poluição do agricultor 3: 270
+Poluição do agricultor 0: 0
+Poluição do agricultor 2: 420
+Poluição do agricultor 4: 450
+
+ETAPA 2
+
+Fiscal finalizou a fiscalização!
+
+Imposto do agricultor 4: $450 (30% do ganho de $1500)
+Imposto do agricultor 2: $366 (30% do ganho de $1220)
+Imposto do agricultor 0: $10
+Imposto do agricultor 3: $189 (30% do ganho de $630)
+Imposto do agricultor 5: $1 (10% do ganho de $10)
+Imposto do agricultor 1: $1 (10% do ganho de $10)
+
+Imposto do empresario de fertilizantes: $10
+Imposto do empresario de agrotoxicos: $99 (30% do ganho de $330)
+Imposto do empresario de maquinas: $10
+Imposto do empresario de sementes: $162 (30% do ganho de $540)
+
+Saldo atual do agricultor 0: $590
+Saldo atual do agricultor 2: $1154
+Saldo atual do agricultor 3: $831
+Saldo atual do agricultor 1: $579
+Saldo atual do agricultor 5: $579
+Saldo atual do agricultor 4: $1350
+
+Saldo atual do empresário de sementes: $478
+Saldo atual do empresário de agrotoxicos: $331
+Saldo atual do empresário de maquinas: $90
+Saldo atual do empresário de fertilizantes: $90
+
+Saldo atual da prefeitura: $2298
+
+Poluição global: 22.65%
+
+Tratamento de água realizado (redução de 5%)! 
+
+Saldo atual da prefeitura: $1495.35
+
+Poluição global: 21.52%
+
