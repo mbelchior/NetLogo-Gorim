@@ -132,9 +132,9 @@ to setup-inicial
   set tipos-semente ["hortalica" "arroz" "soja"]
   set tipos-agrotoxico ["comum" "premium" "super premium"]
   set tipos-fertilizante ["comum" "premium" "super premium"]
-  set sementes-imagens ["hortalica_20.png" "arroz_20.png" "soja_20.png"]
-  set agrotoxico-imagens ["agrotoxico_comum_20.png" "agrotoxico_premium_20.png" "agrotoxico_super_premium_20.png"]
-  set fertilizante-imagens ["fertilizante_comum_20.png" "fertilizante_premium_20.png" "fertilizante_super_premium_20.png"]
+  set sementes-imagens ["icones/semente_hortalica.png" "icones/semente_arroz.png" "icones/semente_soja.png"]
+  set agrotoxico-imagens ["icones/agrotoxico_comum.png" "icones/agrotoxico_premium.png" "icones/agrotoxico_super_premium.png"]
+  set fertilizante-imagens ["icones/fertilizante_comum.png" "icones/fertilizante_premium.png" "icones/fertilizante_super_premium.png"]
   set tipos-multa ["sem multa" "multa leve" "multa média" "multa alta"]
   set medida-prevencao [ "água" "lixo" "esgoto" ]
   set stop? false
@@ -2238,7 +2238,7 @@ HORIZONTAL
 SLIDER
 501
 715
-694
+696
 748
 farmer-0-super-premium-fertilizer
 farmer-0-super-premium-fertilizer
@@ -2251,9 +2251,9 @@ NIL
 HORIZONTAL
 
 SLIDER
-700
+701
 640
-889
+892
 673
 farmer-0-combination-1-machine
 farmer-0-combination-1-machine
@@ -2267,9 +2267,9 @@ HORIZONTAL
 
 SLIDER
 701
-676
+678
 891
-709
+711
 farmer-0-combination-2-machine
 farmer-0-combination-2-machine
 0
@@ -2282,9 +2282,9 @@ HORIZONTAL
 
 SLIDER
 701
-714
+716
 892
-747
+749
 farmer-0-combination-3-machine
 farmer-0-combination-3-machine
 0
@@ -2296,10 +2296,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-702
-751
-836
-784
+899
+640
+1033
+673
 farmer-0-pulverizer
 farmer-0-pulverizer
 0
