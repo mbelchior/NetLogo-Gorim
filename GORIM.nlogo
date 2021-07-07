@@ -18,7 +18,7 @@ empresarios-own [ setor produtos producao saldo poluicao ]
 prefeitos-own [ saldo ]
 
 globals [ global-pollution simulation-round posicao-inicial posicao-parcelas tipos-semente tipos-agrotoxico tipos-fertilizante setores
-  sementes-imagens agrotoxico-imagens
+  sementes-imagens agrotoxico-imagens fertilizante-imagens
   tabela-produtividade tabela-poluicao-agricultor tabela-poluicao-empresario
   tipos-multa reducao-poluicao medida-prevencao
   caminho-prefeito caminho-fiscal-to-farmers caminho-fiscal-to-businessman
@@ -132,8 +132,9 @@ to setup-inicial
   set tipos-semente ["hortalica" "arroz" "soja"]
   set tipos-agrotoxico ["comum" "premium" "super premium"]
   set tipos-fertilizante ["comum" "premium" "super premium"]
-  set sementes-imagens ["hortalica_20.png" "arroz_20.jpg" "soja_20.jpg"]
-  set agrotoxico-imagens ["agrotoxico_comum_20.jpg" "agrotoxico_premium_20.jpg" "agrotoxico_super_premium_20.jpg"]
+  set sementes-imagens ["hortalica_20.png" "arroz_20.png" "soja_20.png"]
+  set agrotoxico-imagens ["agrotoxico_comum_20.png" "agrotoxico_premium_20.png" "agrotoxico_super_premium_20.png"]
+  set fertilizante-imagens ["fertilizante_comum_20.png" "fertilizante_premium_20.png" "fertilizante_super_premium_20.png"]
   set tipos-multa ["sem multa" "multa leve" "multa média" "multa alta"]
   set medida-prevencao [ "água" "lixo" "esgoto" ]
   set stop? false
@@ -671,7 +672,7 @@ end
 to compra-venda-produtos
   compra-semente
   compra-agrotoxico
-  ;; compra-fertilizante
+  compra-fertilizante
   ;; compra-maquina
 end
 
@@ -744,7 +745,7 @@ to realiza-compra-sementes-agricultor-0
     ]
 
     let i 0 ;; indice das parcelas (varia de 0 a 5)
-    let parcelas-sobrando 6
+    let parcelas-disponiveis 6
 
     ;; 1- COMPRA DE HORTALIÇA
 
@@ -756,9 +757,9 @@ to realiza-compra-sementes-agricultor-0
     ]
 
     ;; 2- COMPRA DE ARROZ
-    set parcelas-sobrando parcelas-sobrando - farmer-0-vegetable
-    if farmer-0-rice > parcelas-sobrando [
-      set farmer-0-rice parcelas-sobrando
+    set parcelas-disponiveis parcelas-disponiveis - farmer-0-vegetable
+    if farmer-0-rice > parcelas-disponiveis [
+      set farmer-0-rice parcelas-disponiveis
     ]
 
     ;; ...então COMPRA ARROZ
@@ -768,9 +769,9 @@ to realiza-compra-sementes-agricultor-0
     ]
 
     ;; 3- COMPRA DE SOJA
-    set parcelas-sobrando parcelas-sobrando - farmer-0-rice
-    if farmer-0-soy > parcelas-sobrando [
-      set farmer-0-soy parcelas-sobrando
+    set parcelas-disponiveis parcelas-disponiveis - farmer-0-rice
+    if farmer-0-soy > parcelas-disponiveis [
+      set farmer-0-soy parcelas-disponiveis
     ]
 
     ;; ...então COMPRA SOJA
@@ -782,7 +783,7 @@ to realiza-compra-sementes-agricultor-0
 end
 
 to agricultor-realiza-compra-sementes [identificador indice-parcela quant-produto num-parcelas-ocupadas valor-produto produto]
-
+  ;; [identificador indice-parcela setor-empr quant-produto num-parcelas-ocupadas valor-produto produto]
   agricultor-realiza-compra identificador indice-parcela "s" quant-produto num-parcelas-ocupadas valor-produto produto
 
   ask agricultores with [id = identificador] [
@@ -874,12 +875,12 @@ to compra-agrotoxico
 end
 
 to agricultor-realiza-compra-agrotoxicos [identificador indice-parcela quant-produto num-parcelas-ocupadas valor-produto produto]
-
+  ;; [identificador indice-parcela setor-empr quant-produto num-parcelas-ocupadas valor-produto produto]
   agricultor-realiza-compra identificador indice-parcela "a" quant-produto num-parcelas-ocupadas valor-produto produto
 
   ask agricultores with [id = identificador] [
     ;; [ identificador quantidade agrotoxico valor ]
-    print-log-compra-de-agrotixico id quant-produto produto valor-produto
+    print-log-compra-de-agrotoxico id quant-produto produto valor-produto
   ]
 end
 
@@ -905,15 +906,11 @@ to realiza-compra-agrotoxicos-agricultor-0
     ]
 
     let i 0 ;; indice das parcelas (varia de 0 a 5)
-    let parcelas-sobrando quant-semente-plantada
-
-    ;; farmer-0-common-agrotoxic
-    ;; farmer-0-premium-agrotoxic
-    ;; farmer-0-super-premium-agrotoxic
+    let parcelas-disponiveis quant-semente-plantada ;; para usar com agrotóxico
 
     ;; 1- COMPRA DE AGROTÓXICO COMUM
-    if farmer-0-common-agrotoxic > parcelas-sobrando [
-      set farmer-0-common-agrotoxic parcelas-sobrando
+    if farmer-0-common-agrotoxic > parcelas-disponiveis [
+      set farmer-0-common-agrotoxic parcelas-disponiveis
     ]
 
     ;; verificar antes se agricultor tem saldo para comprar
@@ -924,9 +921,9 @@ to realiza-compra-agrotoxicos-agricultor-0
     ]
 
     ;; 2- COMPRA DE AGROTÓXICO PREMIUM
-    set parcelas-sobrando parcelas-sobrando - farmer-0-common-agrotoxic
-    if farmer-0-premium-agrotoxic > parcelas-sobrando [
-      set farmer-0-premium-agrotoxic parcelas-sobrando
+    set parcelas-disponiveis parcelas-disponiveis - farmer-0-common-agrotoxic
+    if farmer-0-premium-agrotoxic > parcelas-disponiveis [
+      set farmer-0-premium-agrotoxic parcelas-disponiveis
     ]
 
     ;; ...então COMPRA PREMIUM
@@ -936,9 +933,9 @@ to realiza-compra-agrotoxicos-agricultor-0
     ]
 
     ;; 3- COMPRA DE AGROTÓXICO SUPER-PREMIUM
-    set parcelas-sobrando parcelas-sobrando - farmer-0-premium-agrotoxic
-    if farmer-0-super-premium-agrotoxic > parcelas-sobrando [
-      set farmer-0-super-premium-agrotoxic parcelas-sobrando
+    set parcelas-disponiveis parcelas-disponiveis - farmer-0-premium-agrotoxic
+    if farmer-0-super-premium-agrotoxic > parcelas-disponiveis [
+      set farmer-0-super-premium-agrotoxic parcelas-disponiveis
     ]
 
     ;; ...então COMPRA SUPER-PREMIUM
@@ -946,6 +943,129 @@ to realiza-compra-agrotoxicos-agricultor-0
       ;; [identificador indice-parcela quant-produto num-parcelas-ocupadas valor-produto produto]
       agricultor-realiza-compra-agrotoxicos 0 (farmer-0-common-agrotoxic + farmer-0-premium-agrotoxic) farmer-0-super-premium-agrotoxic (farmer-0-common-agrotoxic + farmer-0-premium-agrotoxic + farmer-0-super-premium-agrotoxic) valor-agro-super-premium 2
     ]
+  ]
+end
+
+
+to compra-fertilizante
+  ask agricultores [
+    ifelse set-farmer-0? and id = 0 [
+      realiza-compra-fertilizantes-agricultor-0
+    ][
+      if type-of-fertilizer != "no-fertilizer" [
+        ;; movimentação do agente agricultor
+        if enable-agent-movement? [
+          ;; caminha até o empresário de agrotóxico
+          move-agricultor id (item id caminho-agricultores-para-empresario-fertilizante)
+        ]
+
+        let f random 3 ;; fertilizante aleatório
+
+        if type-of-fertilizer = "common" [
+          set f 0
+        ]
+        if type-of-fertilizer = "premium" [
+          set f 1
+        ]
+        if type-of-fertilizer = "super-premium" [
+          set f 2
+        ]
+
+        let p random (quant-semente-plantada + 1) ;; quantidade aleatória de parcelas (de 0 a 6)
+        let valor-fert 0 ;; valor do fertilizante
+
+        if use-all-farm-land? [
+          set p quant-semente-plantada
+        ]
+
+        ;; cada agricultor pode comprar ou não fertilizante
+        if p != 0 [
+          ask empresarios with [setor = "f"] [
+            ;; valor do fertilizante
+            set valor-fert (item 0 (table:get produtos f))
+          ]
+
+          ;; verificar antes se agricultor tem saldo para comprar
+          ;; se saldo do agricultor for maior, então COMPRA
+          if saldo > p * valor-fert [
+            ;; [identificador indice-parcela quant-produto num-parcelas-ocupadas valor-produto produto]
+            agricultor-realiza-compra-fertilizantes id 0 p p valor-fert f
+          ]
+        ]
+      ]
+    ]
+  ]
+end
+
+to realiza-compra-fertilizantes-agricultor-0
+  ask agricultores with [id = 0] [
+
+    if farmer-0-common-fertilizer + farmer-0-premium-fertilizer + farmer-0-super-premium-fertilizer > 0 and quant-semente-plantada > 0 [
+      ;; movimentação do agente agricultor
+      if enable-agent-movement? [
+        ;; caminha até o empresário de fertilizante
+        move-agricultor id (item id caminho-agricultores-para-empresario-fertilizante)
+      ]
+    ]
+
+    let valor-fert-comum 0
+    let valor-fert-premium 0
+    let valor-fert-super-premium 0
+
+    ask empresarios with [setor = "f"] [
+      set valor-fert-comum (item 0 (table:get produtos 0))
+      set valor-fert-premium (item 0 (table:get produtos 1))
+      set valor-fert-super-premium (item 0 (table:get produtos 2))
+    ]
+
+    let i 0 ;; indice das parcelas (varia de 0 a 5)
+    let parcelas-disponiveis quant-semente-plantada ;; para usar com fertilizantes
+
+    ;; 1- COMPRA DE FERTILIZANTE COMUM
+    if farmer-0-common-fertilizer > parcelas-disponiveis [
+      set farmer-0-common-fertilizer parcelas-disponiveis
+    ]
+
+    ;; verificar antes se agricultor tem saldo para comprar
+    ;; se saldo do agricultor for maior, então COMPRA AGROTÓXICO COMUM
+    if farmer-0-common-fertilizer > 0 and saldo > farmer-0-common-fertilizer * valor-fert-comum [
+      ;; [identificador indice-parcela quant-produto num-parcelas-ocupadas valor-produto produto]
+      agricultor-realiza-compra-fertilizantes 0 0 farmer-0-common-fertilizer farmer-0-common-fertilizer valor-fert-comum 0
+    ]
+
+    ;; 2- COMPRA DE FERTILIZANTE PREMIUM
+    set parcelas-disponiveis parcelas-disponiveis - farmer-0-common-fertilizer
+    if farmer-0-premium-fertilizer > parcelas-disponiveis [
+      set farmer-0-premium-fertilizer parcelas-disponiveis
+    ]
+
+    ;; ...então COMPRA PREMIUM
+    if farmer-0-premium-fertilizer > 0 and saldo > farmer-0-premium-fertilizer * valor-fert-premium [
+      ;; [identificador indice-parcela quant-produto num-parcelas-ocupadas valor-produto produto]
+      agricultor-realiza-compra-fertilizantes 0 farmer-0-common-fertilizer farmer-0-premium-fertilizer (farmer-0-common-fertilizer + farmer-0-premium-fertilizer) valor-fert-premium 1
+    ]
+
+    ;; 3- COMPRA DE FERTILIZANTE SUPER-PREMIUM
+    set parcelas-disponiveis parcelas-disponiveis - farmer-0-premium-fertilizer
+    if farmer-0-super-premium-fertilizer > parcelas-disponiveis [
+      set farmer-0-super-premium-fertilizer parcelas-disponiveis
+    ]
+
+    ;; ...então COMPRA SUPER-PREMIUM
+    if farmer-0-super-premium-fertilizer > 0 and saldo > farmer-0-super-premium-fertilizer * valor-fert-super-premium [
+      ;; [identificador indice-parcela quant-produto num-parcelas-ocupadas valor-produto produto]
+      agricultor-realiza-compra-fertilizantes 0 (farmer-0-common-fertilizer + farmer-0-premium-fertilizer) farmer-0-super-premium-fertilizer (farmer-0-common-fertilizer + farmer-0-premium-fertilizer + farmer-0-super-premium-fertilizer) valor-fert-super-premium 2
+    ]
+  ]
+end
+
+to agricultor-realiza-compra-fertilizantes [identificador indice-parcela quant-produto num-parcelas-ocupadas valor-produto produto]
+  ;; [identificador indice-parcela setor-empr quant-produto num-parcelas-ocupadas valor-produto produto]
+  agricultor-realiza-compra identificador indice-parcela "f" quant-produto num-parcelas-ocupadas valor-produto produto
+
+  ask agricultores with [id = identificador] [
+    ;; [ identificador quantidade fertilizante valor ]
+    print-log-compra-de-fertilizante id quant-produto produto valor-produto
   ]
 end
 
@@ -985,16 +1105,24 @@ to planta
         let x (item 0 (table:get posicao-parcelas (word "a" id "p" p)))
         let y (item 1 (table:get posicao-parcelas (word "a" id "p" p)))
 
-        ;; realiza a plantação
-        bitmap:copy-to-drawing (bitmap:import (item s sementes-imagens)) x y
+        ;; realiza a plantação (interface)
+        bitmap:copy-to-drawing (bitmap:import (item s sementes-imagens)) x y - 1
 
 
         ;; 2- agrotóxico
         let a table:get parcelas (word "p" p "a")
         if a != "-" [ ;; verifica se tem agrotóxico comprado para esta parcela
 
-          ;; coloca o agrotóxico
-          bitmap:copy-to-drawing (bitmap:import (item a agrotoxico-imagens)) x + 24 y
+          ;; coloca o agrotóxico na fazenda (interface)
+          bitmap:copy-to-drawing (bitmap:import (item a agrotoxico-imagens)) x + 21 y - 1
+        ]
+
+        ;; 3- fertilizante
+        let f table:get parcelas (word "p" p "f")
+        if f != "-" [ ;; verifica se tem fertilizante comprado para esta parcela
+
+          ;; coloca o fertilizante na fazenda (interface)
+          bitmap:copy-to-drawing (bitmap:import (item f fertilizante-imagens)) x y + 21
         ]
       ]
 
@@ -1478,9 +1606,13 @@ to print-log-compra-de-semente [ identificador quantidade semente valor ]
   print-log (word "Agricultor " identificador " comprou " quantidade " saco(s) de " (item semente tipos-semente) " ($" valor ")" " por $" (quantidade * valor))
 end
 
-to print-log-compra-de-agrotixico [ identificador quantidade agrotoxico valor ]
+to print-log-compra-de-agrotoxico [ identificador quantidade agrotoxico valor ]
   ;; print-log (word "Agricultor " id " comprou " p " agrotóxico(s) " (item a tipos-agrotoxico) " ($" valor-agro ")" " por $" (p * valor-agro))
   print-log (word "Agricultor " identificador " comprou " quantidade " agrotóxico(s) " (item agrotoxico tipos-agrotoxico) " ($" valor ") por $" (quantidade * valor))
+end
+
+to print-log-compra-de-fertilizante [ identificador quantidade fertilizante valor ]
+  print-log (word "Agricultor " identificador " comprou " quantidade " fertilizante(s) " (item fertilizante tipos-fertilizante) " ($" valor ") por $" (quantidade * valor))
 end
 
 
@@ -1655,7 +1787,7 @@ CHOOSER
 type-of-agrotoxic
 type-of-agrotoxic
 "random" "common" "premium" "super-premium" "no-agrotoxic"
-3
+4
 
 CHOOSER
 21
@@ -1674,8 +1806,8 @@ CHOOSER
 281
 type-of-fertilizer
 type-of-fertilizer
-"random" "commum" "premium" "super-premium" "no-fertilizer"
-4
+"random" "common" "premium" "super-premium" "no-fertilizer"
+2
 
 CHOOSER
 19
@@ -1685,7 +1817,7 @@ CHOOSER
 type-of-seed
 type-of-seed
 "random" "vegetable" "rice" "soy"
-3
+1
 
 MONITOR
 852
@@ -1825,7 +1957,7 @@ SWITCH
 463
 fine?
 fine?
-0
+1
 1
 -1000
 
@@ -1949,7 +2081,7 @@ CHOOSER
 type-of-pollution-treatment
 type-of-pollution-treatment
 "random" "water-treatment" "waste-treatment" "sewage-treatment" "no-treatment"
-4
+1
 
 SWITCH
 22
@@ -1992,7 +2124,7 @@ farmer-0-soy
 farmer-0-soy
 0
 6
-0.0
+2.0
 1
 1
 NIL
@@ -2007,7 +2139,7 @@ farmer-0-vegetable
 farmer-0-vegetable
 0
 6
-0.0
+3.0
 1
 1
 NIL
@@ -2022,7 +2154,7 @@ farmer-0-rice
 farmer-0-rice
 0
 6
-0.0
+1.0
 1
 1
 NIL
@@ -2037,7 +2169,7 @@ farmer-0-common-agrotoxic
 farmer-0-common-agrotoxic
 0
 6
-0.0
+1.0
 1
 1
 NIL
@@ -2052,7 +2184,7 @@ farmer-0-premium-agrotoxic
 farmer-0-premium-agrotoxic
 0
 6
-0.0
+1.0
 1
 1
 NIL
@@ -2067,7 +2199,7 @@ farmer-0-super-premium-agrotoxic
 farmer-0-super-premium-agrotoxic
 0
 6
-0.0
+1.0
 1
 1
 NIL
@@ -2082,7 +2214,7 @@ farmer-0-common-fertilizer
 farmer-0-common-fertilizer
 0
 6
-0.0
+1.0
 1
 1
 NIL
@@ -2097,7 +2229,7 @@ farmer-0-premium-fertilizer
 farmer-0-premium-fertilizer
 0
 6
-0.0
+1.0
 1
 1
 NIL
@@ -2112,7 +2244,7 @@ farmer-0-super-premium-fertilizer
 farmer-0-super-premium-fertilizer
 0
 6
-0.0
+1.0
 1
 1
 NIL
