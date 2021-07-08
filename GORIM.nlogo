@@ -147,9 +147,7 @@ to setup-inicial
   set tempo-espera-movimentacao 0.1 / agent-movement-speed
 
   ;; poluição global mostrada no rio
-  ask patch 0 4 [
-    set plabel (word global-pollution "%")
-  ]
+  atualiza-poluicao-global-interface
 
   ;; Caminhos
   set caminho-prefeito [[0 19] [0 17] [0 15] [0 13]]
@@ -1533,17 +1531,20 @@ to atualiza-poluicao-global
   set global-pollution precision ( global-pollution ) 2
 
   ;; atualiza na interface a poluição global do ambiente
-  ask patch 0 4 [
-    set plabel (word global-pollution "%")
-  ]
-
+  atualiza-poluicao-global-interface
 
   ifelse global-pollution >= 100 [
     set stop? true
   ][
     set stop? false
   ]
+end
 
+to atualiza-poluicao-global-interface
+  ;; atualiza na interface a poluição global do ambiente
+  ask patch 0 4 [
+    set plabel (word global-pollution "%")
+  ]
 end
 
 to atualiza-poluicao-global-apos-tratamento
@@ -1551,6 +1552,8 @@ to atualiza-poluicao-global-apos-tratamento
   set global-pollution global-pollution * (1 - reducao-poluicao)
 
   set global-pollution precision ( global-pollution ) 2
+
+  atualiza-poluicao-global-interface
 end
 
 to atualiza-cor-rio
@@ -2266,7 +2269,7 @@ farmer-0-soy
 farmer-0-soy
 0
 6
-6.0
+0.0
 1
 1
 NIL
@@ -2281,7 +2284,7 @@ farmer-0-vegetable
 farmer-0-vegetable
 0
 6
-0.0
+6.0
 1
 1
 NIL
@@ -2311,7 +2314,7 @@ farmer-0-common-agrotoxic
 farmer-0-common-agrotoxic
 0
 6
-1.0
+0.0
 1
 1
 NIL
@@ -2341,7 +2344,7 @@ farmer-0-super-premium-agrotoxic
 farmer-0-super-premium-agrotoxic
 0
 6
-3.0
+0.0
 1
 1
 NIL
@@ -2401,7 +2404,7 @@ farmer-0-combination-1-machine
 farmer-0-combination-1-machine
 0
 6
-1.0
+0.0
 1
 1
 NIL
@@ -2431,7 +2434,7 @@ farmer-0-combination-3-machine
 farmer-0-combination-3-machine
 0
 6
-1.0
+6.0
 1
 1
 NIL
