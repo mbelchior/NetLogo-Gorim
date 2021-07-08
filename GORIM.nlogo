@@ -17,8 +17,8 @@ agricultores-own [ id parcelas saldo producao poluicao quant-semente-plantada ]
 empresarios-own [ setor produtos producao saldo poluicao ]
 prefeitos-own [ saldo ]
 
-globals [ global-pollution simulation-round posicao-inicial posicao-parcelas tipos-semente tipos-agrotoxico tipos-fertilizante setores
-  sementes-imagens agrotoxico-imagens fertilizante-imagens
+globals [ global-pollution simulation-round posicao-inicial posicao-parcelas tipos-semente tipos-agrotoxico tipos-fertilizante tipos-maquina setores
+  sementes-imagens agrotoxico-imagens fertilizante-imagens maquina-imagens
   tabela-produtividade tabela-poluicao-agricultor tabela-poluicao-empresario
   tipos-multa reducao-poluicao medida-prevencao
   caminho-prefeito caminho-fiscal-to-farmers caminho-fiscal-to-businessman
@@ -132,9 +132,11 @@ to setup-inicial
   set tipos-semente ["hortalica" "arroz" "soja"]
   set tipos-agrotoxico ["comum" "premium" "super premium"]
   set tipos-fertilizante ["comum" "premium" "super premium"]
+  set tipos-maquina ["pacote 1 - semeadora" "pacote 2 - semeadora e colheitadeira" "pacote 3 - semeadora, colheitadeira e drone"]
   set sementes-imagens ["icones/semente_hortalica.png" "icones/semente_arroz.png" "icones/semente_soja.png"]
   set agrotoxico-imagens ["icones/agrotoxico_comum.png" "icones/agrotoxico_premium.png" "icones/agrotoxico_super_premium.png"]
   set fertilizante-imagens ["icones/fertilizante_comum.png" "icones/fertilizante_premium.png" "icones/fertilizante_super_premium.png"]
+  set maquina-imagens ["icones/maquina_semeadora.png" "icones/maquina_colheitadera.png" "icones/maquina_drone.png"]
   set tipos-multa ["sem multa" "multa leve" "multa média" "multa alta"]
   set medida-prevencao [ "água" "lixo" "esgoto" ]
   set stop? false
@@ -673,7 +675,8 @@ to compra-venda-produtos
   compra-semente
   compra-agrotoxico
   compra-fertilizante
-  ;; compra-maquina
+  aluga-maquina
+  ;; aluga-pulverizador
 end
 
 to compra-semente
@@ -1069,6 +1072,138 @@ to agricultor-realiza-compra-fertilizantes [identificador indice-parcela quant-p
   ]
 end
 
+
+to aluga-maquina
+  ask agricultores [
+    ifelse set-farmer-0? and id = 0 [
+      agricultor-realiza-aluguel-maquina-agricultor-0
+    ][
+      ;; se agricultor NÃO estiver usando agrotóxico, então PODE alugar máquina
+      ifelse type-of-agrotoxic = "no-agrotoxic"[
+        if type-of-machine != "no-machine" [
+          ;; movimentação do agente agricultor
+          if enable-agent-movement? [
+            ;; caminha até o empresário de máquinas
+            move-agricultor id (item id caminho-agricultores-para-empresario-maquina)
+          ]
+
+          let m random 3 ;; máquina (pacote) aleatória
+
+          if type-of-machine = "combination-1" [
+            set m 0
+          ]
+          if type-of-machine = "combination-2" [
+            set m 1
+          ]
+          if type-of-machine = "combination-3" [
+            set m 2
+          ]
+
+          let p random (quant-semente-plantada + 1) ;; quantidade aleatória de parcelas (de 0 a 6)
+          let valor-maquina 0 ;; valor da máquina (pacote)
+
+          if use-all-farm-land? [
+            set p quant-semente-plantada
+          ]
+
+          ;; cada agricultor pode aluguar ou não máquinas (pacote)
+          if p != 0 [
+            ask empresarios with [setor = "m"] [
+              ;; valor da máquina (pacote)
+              set valor-maquina (item 0 (table:get produtos m))
+            ]
+
+            ;; verificar antes se agricultor tem saldo para comprar
+            ;; se saldo do agricultor for maior, então COMPRA
+            if saldo > p * valor-maquina [
+              ;; [identificador indice-parcela quant-produto num-parcelas-ocupadas valor-produto produto]
+              agricultor-realiza-aluguel-maquinas id 0 p p valor-maquina m
+            ]
+          ]
+        ]
+      ][
+        set type-of-machine "no-machine"
+      ]
+    ]
+  ]
+end
+
+to agricultor-realiza-aluguel-maquina-agricultor-0
+  ask agricultores with [id = 0] [
+
+    if farmer-0-combination-1-machine + farmer-0-combination-2-machine + farmer-0-combination-3-machine > 0 and quant-semente-plantada > 0 [
+      ;; movimentação do agente agricultor
+      if enable-agent-movement? [
+        ;; caminha até o empresário de máquina
+        move-agricultor id (item id caminho-agricultores-para-empresario-maquina)
+      ]
+    ]
+
+    let valor-maquina-p1 0
+    let valor-maquina-p2 0
+    let valor-maquina-p3 0
+
+    ask empresarios with [setor = "m"] [
+      set valor-maquina-p1 (item 0 (table:get produtos 0))
+      set valor-maquina-p2 (item 0 (table:get produtos 1))
+      set valor-maquina-p3 (item 0 (table:get produtos 2))
+    ]
+
+    let i 0 ;; indice das parcelas (varia de 0 a 5)
+    let parcelas-disponiveis quant-semente-plantada ;; para usar com máquinas (pacotes)
+
+    ;; somente é possível alugar máquina quando não há agrotóxico
+    let quant-agrotoxicos-escolhidos farmer-0-common-agrotoxic + farmer-0-premium-agrotoxic + farmer-0-super-premium-agrotoxic
+    set parcelas-disponiveis parcelas-disponiveis - quant-agrotoxicos-escolhidos
+
+    ;; 1- COMPRA DE PACOTE 1
+    if farmer-0-combination-1-machine > parcelas-disponiveis [
+      set farmer-0-combination-1-machine parcelas-disponiveis
+    ]
+
+    ;; verificar antes se agricultor tem saldo para comprar
+    ;; se saldo do agricultor for maior, então COMPRA PACOTE 1
+    if farmer-0-combination-1-machine > 0 and saldo > farmer-0-combination-1-machine * valor-maquina-p1 [
+      ;; [identificador indice-parcela quant-produto num-parcelas-ocupadas valor-produto produto]
+      agricultor-realiza-aluguel-maquinas 0 (quant-agrotoxicos-escolhidos) farmer-0-combination-1-machine (farmer-0-combination-1-machine + quant-agrotoxicos-escolhidos) valor-maquina-p1 0
+    ]
+
+    ;; 2- COMPRA DE PACOTE 2
+    set parcelas-disponiveis parcelas-disponiveis - farmer-0-combination-1-machine
+    if farmer-0-combination-2-machine > parcelas-disponiveis [
+      set farmer-0-combination-2-machine parcelas-disponiveis
+    ]
+
+    ;; ...então COMPRA PACOTE 2
+    if farmer-0-combination-2-machine > 0 and saldo > farmer-0-combination-2-machine * valor-maquina-p2 [
+      ;; [identificador indice-parcela quant-produto num-parcelas-ocupadas valor-produto produto]
+      agricultor-realiza-aluguel-maquinas 0 (farmer-0-combination-1-machine + quant-agrotoxicos-escolhidos) farmer-0-combination-2-machine (farmer-0-combination-1-machine + farmer-0-combination-2-machine + quant-agrotoxicos-escolhidos) valor-maquina-p2 1
+    ]
+
+    ;; 3- COMPRA DE PACOTE 3
+    set parcelas-disponiveis parcelas-disponiveis - farmer-0-combination-2-machine
+    if farmer-0-combination-3-machine > parcelas-disponiveis [
+      set farmer-0-combination-3-machine parcelas-disponiveis
+    ]
+
+    ;; ...então COMPRA PACOTE 3
+    if farmer-0-combination-3-machine > 0 and saldo > farmer-0-combination-3-machine * valor-maquina-p3 [
+      ;; [identificador indice-parcela quant-produto num-parcelas-ocupadas valor-produto produto]
+      agricultor-realiza-aluguel-maquinas 0 (farmer-0-combination-1-machine + farmer-0-combination-2-machine + quant-agrotoxicos-escolhidos) farmer-0-combination-3-machine (farmer-0-combination-1-machine + farmer-0-combination-2-machine + farmer-0-combination-3-machine + quant-agrotoxicos-escolhidos) valor-maquina-p3 2
+    ]
+  ]
+end
+
+to agricultor-realiza-aluguel-maquinas [identificador indice-parcela quant-produto num-parcelas-ocupadas valor-produto produto]
+  ;; [identificador indice-parcela setor-empr quant-produto num-parcelas-ocupadas valor-produto produto]
+  agricultor-realiza-compra identificador indice-parcela "m" quant-produto num-parcelas-ocupadas valor-produto produto
+
+  ask agricultores with [id = identificador] [
+    ;; [ identificador quantidade maquina valor ]
+    print-log-aluguel-de-maquina id quant-produto produto valor-produto
+  ]
+end
+
 to atualiza-poluicao-empresarios
   ask empresarios [
     let p 0 ;; produto
@@ -1106,23 +1241,27 @@ to planta
         let y (item 1 (table:get posicao-parcelas (word "a" id "p" p)))
 
         ;; realiza a plantação (interface)
-        bitmap:copy-to-drawing (bitmap:import (item s sementes-imagens)) x y - 1
-
+        bitmap:copy-to-drawing (bitmap:import (item s sementes-imagens)) x y
 
         ;; 2- agrotóxico
         let a table:get parcelas (word "p" p "a")
         if a != "-" [ ;; verifica se tem agrotóxico comprado para esta parcela
-
           ;; coloca o agrotóxico na fazenda (interface)
-          bitmap:copy-to-drawing (bitmap:import (item a agrotoxico-imagens)) x + 21 y - 1
+          bitmap:copy-to-drawing (bitmap:import (item a agrotoxico-imagens)) x + 21 y
         ]
 
         ;; 3- fertilizante
         let f table:get parcelas (word "p" p "f")
         if f != "-" [ ;; verifica se tem fertilizante comprado para esta parcela
-
           ;; coloca o fertilizante na fazenda (interface)
           bitmap:copy-to-drawing (bitmap:import (item f fertilizante-imagens)) x y + 21
+        ]
+
+        ;; 3- Máquina (pacotes)
+        let m table:get parcelas (word "p" p "m")
+        if m != "-" [ ;; verifica se tem máquina (pacote) alugada para esta parcela
+          ;; coloca a máquina (pacote) na fazenda (interface)
+          bitmap:copy-to-drawing (bitmap:import (item m maquina-imagens)) x + 21 y + 21
         ]
       ]
 
@@ -1615,6 +1754,9 @@ to print-log-compra-de-fertilizante [ identificador quantidade fertilizante valo
   print-log (word "Agricultor " identificador " comprou " quantidade " fertilizante(s) " (item fertilizante tipos-fertilizante) " ($" valor ") por $" (quantidade * valor))
 end
 
+to print-log-aluguel-de-maquina [ identificador quantidade maquina valor ]
+  print-log (word "Agricultor " identificador " alugou " quantidade " pacote(s) de máquinas \n\t\t(" (item maquina tipos-maquina) ") ($" valor ") por $" (quantidade * valor))
+end
 
 to move-prefeito [lista]
   let tam length lista
@@ -1773,7 +1915,7 @@ number-farmer
 number-farmer
 1
 6
-6.0
+1.0
 1
 1
 NIL
@@ -1787,7 +1929,7 @@ CHOOSER
 type-of-agrotoxic
 type-of-agrotoxic
 "random" "common" "premium" "super-premium" "no-agrotoxic"
-4
+1
 
 CHOOSER
 21
@@ -1807,7 +1949,7 @@ CHOOSER
 type-of-fertilizer
 type-of-fertilizer
 "random" "common" "premium" "super-premium" "no-fertilizer"
-2
+1
 
 CHOOSER
 19
@@ -1817,7 +1959,7 @@ CHOOSER
 type-of-seed
 type-of-seed
 "random" "vegetable" "rice" "soy"
-1
+3
 
 MONITOR
 852
@@ -1957,7 +2099,7 @@ SWITCH
 463
 fine?
 fine?
-1
+0
 1
 -1000
 
@@ -2090,7 +2232,7 @@ SWITCH
 422
 use-all-farm-land?
 use-all-farm-land?
-1
+0
 1
 -1000
 
@@ -2124,7 +2266,7 @@ farmer-0-soy
 farmer-0-soy
 0
 6
-2.0
+6.0
 1
 1
 NIL
@@ -2139,7 +2281,7 @@ farmer-0-vegetable
 farmer-0-vegetable
 0
 6
-3.0
+0.0
 1
 1
 NIL
@@ -2154,7 +2296,7 @@ farmer-0-rice
 farmer-0-rice
 0
 6
-1.0
+0.0
 1
 1
 NIL
@@ -2184,7 +2326,7 @@ farmer-0-premium-agrotoxic
 farmer-0-premium-agrotoxic
 0
 6
-1.0
+0.0
 1
 1
 NIL
@@ -2199,7 +2341,7 @@ farmer-0-super-premium-agrotoxic
 farmer-0-super-premium-agrotoxic
 0
 6
-1.0
+3.0
 1
 1
 NIL
@@ -2214,7 +2356,7 @@ farmer-0-common-fertilizer
 farmer-0-common-fertilizer
 0
 6
-1.0
+0.0
 1
 1
 NIL
@@ -2229,7 +2371,7 @@ farmer-0-premium-fertilizer
 farmer-0-premium-fertilizer
 0
 6
-1.0
+0.0
 1
 1
 NIL
@@ -2244,7 +2386,7 @@ farmer-0-super-premium-fertilizer
 farmer-0-super-premium-fertilizer
 0
 6
-1.0
+6.0
 1
 1
 NIL
@@ -2259,7 +2401,7 @@ farmer-0-combination-1-machine
 farmer-0-combination-1-machine
 0
 6
-0.0
+1.0
 1
 1
 NIL
@@ -2289,7 +2431,7 @@ farmer-0-combination-3-machine
 farmer-0-combination-3-machine
 0
 6
-0.0
+1.0
 1
 1
 NIL
