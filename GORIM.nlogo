@@ -136,7 +136,7 @@ to setup-inicial
   set sementes-imagens ["icones/semente_hortalica.png" "icones/semente_arroz.png" "icones/semente_soja.png"]
   set agrotoxico-imagens ["icones/agrotoxico_comum.png" "icones/agrotoxico_premium.png" "icones/agrotoxico_super_premium.png"]
   set fertilizante-imagens ["icones/fertilizante_comum.png" "icones/fertilizante_premium.png" "icones/fertilizante_super_premium.png"]
-  set maquina-imagens ["icones/maquina_semeadora.png" "icones/maquina_colheitadera.png" "icones/maquina_drone.png"]
+  set maquina-imagens ["icones/maquina_semeadora.png" "icones/maquina_colheitadeira.png" "icones/maquina_drone.png"]
   set tipos-multa ["sem multa" "multa leve" "multa média" "multa alta"]
   set medida-prevencao [ "água" "lixo" "esgoto" ]
   set stop? false
@@ -1932,7 +1932,7 @@ CHOOSER
 type-of-agrotoxic
 type-of-agrotoxic
 "random" "common" "premium" "super-premium" "no-agrotoxic"
-1
+4
 
 CHOOSER
 21
@@ -1942,7 +1942,7 @@ CHOOSER
 type-of-machine
 type-of-machine
 "random" "combination-1" "combination-2" "combination-3" "no-machine"
-4
+3
 
 CHOOSER
 20
@@ -1952,7 +1952,7 @@ CHOOSER
 type-of-fertilizer
 type-of-fertilizer
 "random" "common" "premium" "super-premium" "no-fertilizer"
-1
+4
 
 CHOOSER
 19
@@ -2235,7 +2235,7 @@ SWITCH
 422
 use-all-farm-land?
 use-all-farm-land?
-0
+1
 1
 -1000
 
@@ -2256,7 +2256,7 @@ SWITCH
 702
 set-farmer-0?
 set-farmer-0?
-0
+1
 1
 -1000
 
@@ -2269,7 +2269,7 @@ farmer-0-soy
 farmer-0-soy
 0
 6
-0.0
+1.0
 1
 1
 NIL
@@ -2284,7 +2284,7 @@ farmer-0-vegetable
 farmer-0-vegetable
 0
 6
-6.0
+0.0
 1
 1
 NIL
@@ -2344,7 +2344,7 @@ farmer-0-super-premium-agrotoxic
 farmer-0-super-premium-agrotoxic
 0
 6
-0.0
+1.0
 1
 1
 NIL
@@ -2389,7 +2389,7 @@ farmer-0-super-premium-fertilizer
 farmer-0-super-premium-fertilizer
 0
 6
-6.0
+1.0
 1
 1
 NIL
@@ -2434,7 +2434,7 @@ farmer-0-combination-3-machine
 farmer-0-combination-3-machine
 0
 6
-6.0
+0.0
 1
 1
 NIL
