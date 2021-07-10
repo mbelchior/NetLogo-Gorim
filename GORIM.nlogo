@@ -69,11 +69,11 @@ to setup-inicial
 
   ;; define a posição inicial das fazendas
   table:put posicao-inicial "f0" [-25 -15]
-  table:put posicao-inicial "f1" [0 -15]
-  table:put posicao-inicial "f2" [25 -15]
+  table:put posicao-inicial "f1" [1 -15]
+  table:put posicao-inicial "f2" [27 -15]
   table:put posicao-inicial "f3" [-25 -34]
-  table:put posicao-inicial "f4" [0 -34]
-  table:put posicao-inicial "f5" [25 -34]
+  table:put posicao-inicial "f4" [1 -34]
+  table:put posicao-inicial "f5" [27 -34]
 
   ;; define a posição inicial dos empresarios
   table:put posicao-inicial "e0" [-23 21] ;; sementes
@@ -83,47 +83,47 @@ to setup-inicial
 
   ;; define a posição das parcelas de terra dos agricultores
   set posicao-parcelas table:make
-  table:put posicao-parcelas "a0p0" [51 374]
-  table:put posicao-parcelas "a0p1" [96 374]
-  table:put posicao-parcelas "a0p2" [141 374]
-  table:put posicao-parcelas "a0p3" [51 419]
-  table:put posicao-parcelas "a0p4" [96 419]
-  table:put posicao-parcelas "a0p5" [141 419]
+  table:put posicao-parcelas "a0p0" [35 374]
+  table:put posicao-parcelas "a0p1" [88 374]
+  table:put posicao-parcelas "a0p2" [140 374]
+  table:put posicao-parcelas "a0p3" [35 419]
+  table:put posicao-parcelas "a0p4" [88 419]
+  table:put posicao-parcelas "a0p5" [140 419]
 
-  table:put posicao-parcelas "a1p0" [239 374]
-  table:put posicao-parcelas "a1p1" [284 374]
-  table:put posicao-parcelas "a1p2" [329 374]
-  table:put posicao-parcelas "a1p3" [239 419]
-  table:put posicao-parcelas "a1p4" [284 419]
-  table:put posicao-parcelas "a1p5" [329 419]
+  table:put posicao-parcelas "a1p0" [230 374]
+  table:put posicao-parcelas "a1p1" [283 374]
+  table:put posicao-parcelas "a1p2" [335 374]
+  table:put posicao-parcelas "a1p3" [230 419]
+  table:put posicao-parcelas "a1p4" [283 419]
+  table:put posicao-parcelas "a1p5" [335 419]
 
-  table:put posicao-parcelas "a2p0" [426 374]
-  table:put posicao-parcelas "a2p1" [471 374]
-  table:put posicao-parcelas "a2p2" [516 374]
-  table:put posicao-parcelas "a2p3" [426 419]
-  table:put posicao-parcelas "a2p4" [471 419]
-  table:put posicao-parcelas "a2p5" [516 419]
+  table:put posicao-parcelas "a2p0" [425 374]
+  table:put posicao-parcelas "a2p1" [478 374]
+  table:put posicao-parcelas "a2p2" [530 374]
+  table:put posicao-parcelas "a2p3" [425 419]
+  table:put posicao-parcelas "a2p4" [478 419]
+  table:put posicao-parcelas "a2p5" [530 419]
 
-  table:put posicao-parcelas "a3p0" [51 516]
-  table:put posicao-parcelas "a3p1" [96 516]
-  table:put posicao-parcelas "a3p2" [141 516]
-  table:put posicao-parcelas "a3p3" [51 561]
-  table:put posicao-parcelas "a3p4" [96 561]
-  table:put posicao-parcelas "a3p5" [141 561]
+  table:put posicao-parcelas "a3p0" [35 516]
+  table:put posicao-parcelas "a3p1" [88 516]
+  table:put posicao-parcelas "a3p2" [140 516]
+  table:put posicao-parcelas "a3p3" [35 561]
+  table:put posicao-parcelas "a3p4" [88 561]
+  table:put posicao-parcelas "a3p5" [140 561]
 
-  table:put posicao-parcelas "a4p0" [239 516]
-  table:put posicao-parcelas "a4p1" [284 516]
-  table:put posicao-parcelas "a4p2" [329 516]
-  table:put posicao-parcelas "a4p3" [239 561]
-  table:put posicao-parcelas "a4p4" [284 561]
-  table:put posicao-parcelas "a4p5" [329 561]
+  table:put posicao-parcelas "a4p0" [230 516]
+  table:put posicao-parcelas "a4p1" [283 516]
+  table:put posicao-parcelas "a4p2" [335 516]
+  table:put posicao-parcelas "a4p3" [230 561]
+  table:put posicao-parcelas "a4p4" [283 561]
+  table:put posicao-parcelas "a4p5" [335 561]
 
-  table:put posicao-parcelas "a5p0" [426 516]
-  table:put posicao-parcelas "a5p1" [471 516]
-  table:put posicao-parcelas "a5p2" [516 516]
-  table:put posicao-parcelas "a5p3" [426 561]
-  table:put posicao-parcelas "a5p4" [471 561]
-  table:put posicao-parcelas "a5p5" [516 561]
+  table:put posicao-parcelas "a5p0" [425 516]
+  table:put posicao-parcelas "a5p1" [478 516]
+  table:put posicao-parcelas "a5p2" [530 516]
+  table:put posicao-parcelas "a5p3" [425 561]
+  table:put posicao-parcelas "a5p4" [478 561]
+  table:put posicao-parcelas "a5p5" [530 561]
 
   ;; define variáveis globais
   set global-pollution 20
@@ -136,7 +136,7 @@ to setup-inicial
   set sementes-imagens ["icones/semente_hortalica.png" "icones/semente_arroz.png" "icones/semente_soja.png"]
   set agrotoxico-imagens ["icones/agrotoxico_comum.png" "icones/agrotoxico_premium.png" "icones/agrotoxico_super_premium.png"]
   set fertilizante-imagens ["icones/fertilizante_comum.png" "icones/fertilizante_premium.png" "icones/fertilizante_super_premium.png"]
-  set maquina-imagens ["icones/maquina_semeadora.png" "icones/maquina_colheitadeira.png" "icones/maquina_drone.png"]
+  set maquina-imagens ["icones/maquina_semeadora.png" "icones/maquina_colheitadeira.png" "icones/maquina_drone.png" "icones/maquina_pulverizador.png"]
   set tipos-multa ["sem multa" "multa leve" "multa média" "multa alta"]
   set medida-prevencao [ "água" "lixo" "esgoto" ]
   set stop? false
@@ -422,7 +422,7 @@ end
 
 to cria-agricultores
   set-default-shape agricultores "agricultor"
-  set-default-shape cercas "square 3"
+  set-default-shape cercas "square 4"
 
   ;; cria os agricultores
   let i 0
@@ -1259,8 +1259,15 @@ to planta
         let m table:get parcelas (word "p" p "m")
         if m != "-" [ ;; verifica se tem máquina (pacote) alugada para esta parcela
           ;; coloca a máquina (pacote) na fazenda (interface)
-          bitmap:copy-to-drawing (bitmap:import (item m maquina-imagens)) x + 21 y + 21
+          bitmap:copy-to-drawing (bitmap:import (item m maquina-imagens)) x + 20 y + 25
         ]
+
+        ;; 4- Máquina (pulverizador)
+        ;;let m_p table:get parcelas (word "p" p "p")
+        ;;if p != "-" [ ;; verifica se tem máquina (pulverizador) alugado para esta parcela
+          ;; coloca a máquina (pulverizador) na fazenda (interface)
+          ;;bitmap:copy-to-drawing (bitmap:import (item 3 maquina-imagens)) x + 35 y + 25
+        ;;]
       ]
 
       set p p + 1
@@ -1918,7 +1925,7 @@ number-farmer
 number-farmer
 1
 6
-1.0
+6.0
 1
 1
 NIL
@@ -1952,7 +1959,7 @@ CHOOSER
 type-of-fertilizer
 type-of-fertilizer
 "random" "common" "premium" "super-premium" "no-fertilizer"
-4
+3
 
 CHOOSER
 19
@@ -2235,7 +2242,7 @@ SWITCH
 422
 use-all-farm-land?
 use-all-farm-land?
-1
+0
 1
 -1000
 
@@ -2269,7 +2276,7 @@ farmer-0-soy
 farmer-0-soy
 0
 6
-1.0
+0.0
 1
 1
 NIL
@@ -2284,7 +2291,7 @@ farmer-0-vegetable
 farmer-0-vegetable
 0
 6
-0.0
+3.0
 1
 1
 NIL
@@ -2314,7 +2321,7 @@ farmer-0-common-agrotoxic
 farmer-0-common-agrotoxic
 0
 6
-0.0
+2.0
 1
 1
 NIL
@@ -2344,7 +2351,7 @@ farmer-0-super-premium-agrotoxic
 farmer-0-super-premium-agrotoxic
 0
 6
-1.0
+0.0
 1
 1
 NIL
@@ -2359,7 +2366,7 @@ farmer-0-common-fertilizer
 farmer-0-common-fertilizer
 0
 6
-0.0
+3.0
 1
 1
 NIL
@@ -2389,7 +2396,7 @@ farmer-0-super-premium-fertilizer
 farmer-0-super-premium-fertilizer
 0
 6
-1.0
+0.0
 1
 1
 NIL
@@ -2434,7 +2441,7 @@ farmer-0-combination-3-machine
 farmer-0-combination-3-machine
 0
 6
-0.0
+1.0
 1
 1
 NIL
@@ -2933,6 +2940,21 @@ Line -6459832 false 195 60 195 240
 Line -16777216 false 285 60 285 240
 Line -16777216 false 15 60 285 60
 Line -16777216 false 15 60 15 240
+
+square 4
+false
+0
+Rectangle -6459832 true false -30 60 -15 240
+Rectangle -6459832 true false 300 60 315 240
+Rectangle -6459832 true false -30 240 315 255
+Rectangle -6459832 true false -30 45 315 60
+Line -6459832 false -30 150 315 150
+Line -6459832 false 90 60 90 240
+Line -16777216 false -15 240 300 240
+Line -6459832 false 195 60 195 240
+Line -16777216 false 300 60 300 240
+Line -16777216 false -15 60 300 60
+Line -16777216 false -15 60 -15 240
 
 star
 false
