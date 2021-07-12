@@ -623,7 +623,7 @@ to zera-parcelas
       table:put parcelas (word "p" p "a") "-"
       table:put parcelas (word "p" p "f") "-"
       table:put parcelas (word "p" p "m") "-"
-      table:put parcelas (word "p" p "p") "-"
+      table:put parcelas (word "p" p "pl") "-"
       table:put parcelas (word "p" p "producao") "-"
       table:put parcelas (word "p" p "poluicao") "-"
 
@@ -674,7 +674,7 @@ to compra-venda-produtos
   compra-agrotoxico
   compra-fertilizante
   aluga-maquina
-  ;; aluga-pulverizador
+  aluga-pulverizador
 end
 
 to compra-semente
@@ -811,6 +811,11 @@ to agricultor-realiza-compra [identificador indice-parcela setor-empr quant-prod
 end
 
 to empresario-realiza-venda [setor-empr quant-produto produto]
+
+  if setor-empr = "pl" [
+    set setor-empr "m"
+  ]
+
   ask empresarios with [setor = setor-empr] [
     let valor-produto (item 0 (table:get produtos produto))
 
@@ -1074,7 +1079,7 @@ end
 to aluga-maquina
   ask agricultores [
     ifelse set-farmer-0? and id = 0 [
-      agricultor-realiza-aluguel-maquina-agricultor-0
+      realiza-aluguel-maquina-agricultor-0
     ][
       ;; se agricultor NÃO estiver usando agrotóxico, então PODE alugar máquina
       ifelse type-of-agrotoxic = "no-agrotoxic"[
@@ -1126,16 +1131,8 @@ to aluga-maquina
   ]
 end
 
-to agricultor-realiza-aluguel-maquina-agricultor-0
+to realiza-aluguel-maquina-agricultor-0
   ask agricultores with [id = 0] [
-
-    if farmer-0-combination-1-machine + farmer-0-combination-2-machine + farmer-0-combination-3-machine > 0 and quant-semente-plantada > 0 [
-      ;; movimentação do agente agricultor
-      if enable-agent-movement? [
-        ;; caminha até o empresário de máquina
-        move-agricultor id (item id caminho-agricultores-para-empresario-maquina)
-      ]
-    ]
 
     let valor-maquina-p1 0
     let valor-maquina-p2 0
@@ -1153,6 +1150,14 @@ to agricultor-realiza-aluguel-maquina-agricultor-0
     ;; somente é possível alugar máquina quando não há agrotóxico
     let quant-agrotoxicos-escolhidos farmer-0-common-agrotoxic + farmer-0-premium-agrotoxic + farmer-0-super-premium-agrotoxic
     set parcelas-disponiveis parcelas-disponiveis - quant-agrotoxicos-escolhidos
+
+    if farmer-0-combination-1-machine + farmer-0-combination-2-machine + farmer-0-combination-3-machine > 0 and parcelas-disponiveis > 0 [
+      ;; movimentação do agente agricultor
+      if enable-agent-movement? [
+        ;; caminha até o empresário de máquina
+        move-agricultor id (item id caminho-agricultores-para-empresario-maquina)
+      ]
+    ]
 
     ;; 1- COMPRA DE PACOTE 1
     if farmer-0-combination-1-machine > parcelas-disponiveis [
@@ -1199,6 +1204,115 @@ to agricultor-realiza-aluguel-maquinas [identificador indice-parcela quant-produ
   ask agricultores with [id = identificador] [
     ;; [ identificador quantidade maquina valor ]
     print-log-aluguel-de-maquina id quant-produto produto valor-produto
+  ]
+end
+
+to aluga-pulverizador
+  ask agricultores [
+    ifelse set-farmer-0? and id = 0 [
+      realiza-aluguel-pulverizador-agricultor-0
+    ][
+      if use-of-pulverizer != "no-pulverizer" [
+        ;; Se não alugou máquina (pacotes), então tem que fazer a movimentação (se sim, a movimentação já foi feita)
+        ;; até o empresário de máquina para compra pulverizador
+        if type-of-machine = "no-machine" [
+          ;; movimentação do agente agricultor
+          if enable-agent-movement? [
+            ;; caminha até o empresário de máquinas
+            move-agricultor id (item id caminho-agricultores-para-empresario-maquina)
+          ]
+        ]
+
+        let pl random 2 ;; máquina (pulverizador) aleatório (de 0 a 1)
+        let p quant-semente-plantada
+        let valor-pulverizador 0 ;; valor da máquina (pacote)
+        let quant-produto 0
+
+        if use-of-pulverizer = "always" or use-all-farm-land? [
+          set pl 1
+        ]
+
+        ask empresarios with [setor = "m"] [
+          ;; valor da máquina (pulverizador)
+          set valor-pulverizador (item 0 (table:get produtos 3))
+        ]
+
+        ;; percorre as parcelas de terra que foram plantadas, e verifica se tenta alugar o pulverizador
+        let i 0 ;; indice das parcelas (varia de 0 a 5)
+        while [i < p] [
+
+          if use-all-farm-land? = false and use-of-pulverizer != "always" [
+            set pl random 2 ;; aleatório (de 0 a 1)
+          ]
+
+          if pl = 1 [
+            let s table:get parcelas (word "p" i "s")
+            ;; verifica se tem semente comprada para esta parcela
+            if s != "-" [
+              ;; verificar antes se agricultor tem saldo para comprar
+              ;; se saldo do agricultor for maior, então COMPRA
+              if saldo > valor-pulverizador [
+                ;; [identificador indice-parcela setor-empr quant-produto num-parcelas-ocupadas valor-produto produto]
+                agricultor-realiza-compra id i "pl" 1 (i + 1) valor-pulverizador 3
+
+                set quant-produto quant-produto + 1
+              ]
+            ]
+          ]
+
+          set i i + 1
+        ]
+
+        if quant-produto > 0 [
+          ;; [ identificador quantidade valor ]
+          print-log-aluguel-de-pulverizador id quant-produto valor-pulverizador
+        ]
+
+      ]
+    ]
+  ]
+end
+
+to agricultor-realiza-aluguel-pulverizador [identificador indice-parcela quant-produto num-parcelas-ocupadas valor-produto produto]
+  ;; [identificador indice-parcela setor-empr quant-produto num-parcelas-ocupadas valor-produto produto]
+  agricultor-realiza-compra identificador indice-parcela "pl" quant-produto num-parcelas-ocupadas valor-produto produto
+
+  ask agricultores with [id = identificador] [
+    ;; [ identificador quantidade valor ]
+    print-log-aluguel-de-pulverizador id quant-produto valor-produto
+  ]
+end
+
+to realiza-aluguel-pulverizador-agricultor-0
+  ask agricultores with [id = 0] [
+    let valor-pulverizador 0
+
+    ask empresarios with [setor = "m"] [
+      set valor-pulverizador (item 0 (table:get produtos 3))
+    ]
+
+    let i 0 ;; indice das parcelas (varia de 0 a 5)
+    let parcelas-disponiveis quant-semente-plantada ;; para usar com máquinas (pulverizadores)
+
+    ;; Se não alugou máquina (pacotes), então tem que fazer a movimentação (se sim, a movimentação já foi feita)
+    if farmer-0-combination-1-machine + farmer-0-combination-2-machine + farmer-0-combination-3-machine = 0 and farmer-0-pulverizer > 0 and parcelas-disponiveis > 0 [
+      ;; movimentação do agente agricultor
+      if enable-agent-movement? [
+        ;; caminha até o empresário de máquina
+        move-agricultor id (item id caminho-agricultores-para-empresario-maquina)
+      ]
+    ]
+
+    if farmer-0-pulverizer > parcelas-disponiveis [
+      set farmer-0-pulverizer parcelas-disponiveis
+    ]
+
+    ;; verificar antes se agricultor tem saldo para comprar
+    ;; se saldo do agricultor for maior, então COMPRA PULVERIZADOR
+    if farmer-0-pulverizer > 0 and saldo > farmer-0-pulverizer * valor-pulverizador [
+      ;; [identificador indice-parcela quant-produto num-parcelas-ocupadas valor-produto produto]
+      agricultor-realiza-aluguel-pulverizador 0 0 farmer-0-pulverizer farmer-0-pulverizer valor-pulverizador 3
+    ]
   ]
 end
 
@@ -1263,11 +1377,11 @@ to planta
         ]
 
         ;; 4- Máquina (pulverizador)
-        ;;let m_p table:get parcelas (word "p" p "p")
-        ;;if p != "-" [ ;; verifica se tem máquina (pulverizador) alugado para esta parcela
+        let pl table:get parcelas (word "p" p "pl")
+        if pl != "-" [ ;; verifica se tem máquina (pulverizador) alugado para esta parcela
           ;; coloca a máquina (pulverizador) na fazenda (interface)
-          ;;bitmap:copy-to-drawing (bitmap:import (item 3 maquina-imagens)) x + 35 y + 25
-        ;;]
+          bitmap:copy-to-drawing (bitmap:import (item pl maquina-imagens)) x + 35 y + 25
+        ]
       ]
 
       set p p + 1
@@ -1332,9 +1446,15 @@ to atualiza-poluicao-agricultores
     while [p < 6] [
       let s table:get parcelas (word "p" p "s")
       let a table:get parcelas (word "p" p "a")
+      let pl table:get parcelas (word "p" p "pl")
 
       if s != "-" [ ;; verifica se tem semente comprada para esta parcela
         let poluicao-parcela table:get tabela-poluicao-agricultor (word s a)
+
+        ;; se usou pulverizador na parcela, reduz na metade a puluição da parcela
+        if pl != "-" [
+          set poluicao-parcela poluicao-parcela / 2
+        ]
 
         ;; atualiza a poluicao da parcela
         table:put parcelas (word "p" p "poluicao") poluicao-parcela
@@ -1768,6 +1888,10 @@ to print-log-aluguel-de-maquina [ identificador quantidade maquina valor ]
   print-log (word "Agricultor " identificador " alugou " quantidade " pacote(s) de máquinas \n\t\t(" (item maquina tipos-maquina) ") ($" valor ") por $" (quantidade * valor))
 end
 
+to print-log-aluguel-de-pulverizador [ identificador quantidade valor ]
+  print-log (word "Agricultor " identificador " alugou " quantidade " pulverizador ($" valor ") por $" (quantidade * valor))
+end
+
 to move-prefeito [lista]
   let tam length lista
   let i  0
@@ -1925,7 +2049,7 @@ number-farmer
 number-farmer
 1
 6
-6.0
+1.0
 1
 1
 NIL
@@ -1939,7 +2063,7 @@ CHOOSER
 type-of-agrotoxic
 type-of-agrotoxic
 "random" "common" "premium" "super-premium" "no-agrotoxic"
-4
+3
 
 CHOOSER
 21
@@ -1949,7 +2073,7 @@ CHOOSER
 type-of-machine
 type-of-machine
 "random" "combination-1" "combination-2" "combination-3" "no-machine"
-3
+4
 
 CHOOSER
 20
@@ -2233,7 +2357,7 @@ CHOOSER
 type-of-pollution-treatment
 type-of-pollution-treatment
 "random" "water-treatment" "waste-treatment" "sewage-treatment" "no-treatment"
-1
+2
 
 SWITCH
 22
@@ -2276,7 +2400,7 @@ farmer-0-soy
 farmer-0-soy
 0
 6
-0.0
+6.0
 1
 1
 NIL
@@ -2291,7 +2415,7 @@ farmer-0-vegetable
 farmer-0-vegetable
 0
 6
-3.0
+0.0
 1
 1
 NIL
@@ -2321,7 +2445,7 @@ farmer-0-common-agrotoxic
 farmer-0-common-agrotoxic
 0
 6
-2.0
+0.0
 1
 1
 NIL
@@ -2351,7 +2475,7 @@ farmer-0-super-premium-agrotoxic
 farmer-0-super-premium-agrotoxic
 0
 6
-0.0
+6.0
 1
 1
 NIL
@@ -2366,7 +2490,7 @@ farmer-0-common-fertilizer
 farmer-0-common-fertilizer
 0
 6
-3.0
+0.0
 1
 1
 NIL
@@ -2396,7 +2520,7 @@ farmer-0-super-premium-fertilizer
 farmer-0-super-premium-fertilizer
 0
 6
-0.0
+6.0
 1
 1
 NIL
@@ -2441,7 +2565,7 @@ farmer-0-combination-3-machine
 farmer-0-combination-3-machine
 0
 6
-1.0
+0.0
 1
 1
 NIL
