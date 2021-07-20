@@ -18,7 +18,7 @@ empresarios-own [ setor produtos producao saldo poluicao ]
 prefeitos-own [ saldo ]
 
 globals [ global-pollution simulation-round posicao-inicial posicao-parcelas tipos-semente tipos-agrotoxico tipos-fertilizante tipos-maquina setores
-  sementes-imagens agrotoxico-imagens fertilizante-imagens maquina-imagens
+  sementes-imagens agrotoxico-imagens fertilizante-imagens maquina-imagens selo-verde-imagem
   tabela-produtividade tabela-poluicao-agricultor tabela-poluicao-empresario
   tipos-multa reducao-poluicao medida-prevencao
   caminho-prefeito caminho-fiscal-to-farmers caminho-fiscal-to-businessman
@@ -137,6 +137,7 @@ to setup-inicial
   set agrotoxico-imagens ["icones/agrotoxico_comum.png" "icones/agrotoxico_premium.png" "icones/agrotoxico_super_premium.png"]
   set fertilizante-imagens ["icones/fertilizante_comum.png" "icones/fertilizante_premium.png" "icones/fertilizante_super_premium.png"]
   set maquina-imagens ["icones/maquina_semeadora.png" "icones/maquina_colheitadeira.png" "icones/maquina_drone.png" "icones/maquina_pulverizador.png"]
+  set selo-verde-imagem "icones/selo.png"
   set tipos-multa ["sem multa" "multa leve" "multa média" "multa alta"]
   set medida-prevencao [ "água" "lixo" "esgoto" ]
   set stop? false
@@ -561,6 +562,8 @@ to go
   atualiza-poluicao-empresarios ;; empresário: após a venda/aluguel de produtos
   print-log-poluicao-empresarios
 
+  ;;pede-selo-verde ;; agricultor ;; se não usou agrotóxico, o pedido de selo verde está automático
+
   planta ;; agricultor
 
   atualiza-producao-agricultores ;; agricultor: após a plantação
@@ -570,6 +573,8 @@ to go
   print-log-poluicao-agricultores
 
   print-log "ETAPA 2\n"
+
+  concede-selo-verde ;; fiscal
 
   fiscaliza ;; fiscal
 
@@ -626,6 +631,7 @@ to zera-parcelas
       table:put parcelas (word "p" p "pl") "-"
       table:put parcelas (word "p" p "producao") "-"
       table:put parcelas (word "p" p "poluicao") "-"
+      table:put parcelas (word "p" p "sv") false
 
       set p (p + 1)
     ]
@@ -1369,14 +1375,14 @@ to planta
           bitmap:copy-to-drawing (bitmap:import (item f fertilizante-imagens)) x y + 21
         ]
 
-        ;; 3- Máquina (pacotes)
+        ;; 4- máquina (pacotes)
         let m table:get parcelas (word "p" p "m")
         if m != "-" [ ;; verifica se tem máquina (pacote) alugada para esta parcela
           ;; coloca a máquina (pacote) na fazenda (interface)
           bitmap:copy-to-drawing (bitmap:import (item m maquina-imagens)) x + 20 y + 25
         ]
 
-        ;; 4- Máquina (pulverizador)
+        ;; 5- máquina (pulverizador)
         let pl table:get parcelas (word "p" p "pl")
         if pl != "-" [ ;; verifica se tem máquina (pulverizador) alugado para esta parcela
           ;; coloca a máquina (pulverizador) na fazenda (interface)
@@ -1464,6 +1470,54 @@ to atualiza-poluicao-agricultores
       ]
 
       set p p + 1
+    ]
+  ]
+end
+
+to concede-selo-verde
+  if green-seal != "no-green-seal" [
+    let selo-verde false
+
+    ask agricultores [
+
+      let parcelas-log "" ;; parcelas para o log
+      set selo-verde false
+      let p 0
+      while [p < 6] [ ;; percorre as parcelas de terra que foram plantadas, e verifica se concede selo verde
+        let a table:get parcelas (word "p" p "a")
+        let s table:get parcelas (word "p" p "s")
+
+        ;; verifica se não tem agrotóxico comprado para esta parcela e se tem semente comprada para esta parcela
+        if a = "-" and s != "-" [
+
+          let sv random 2 ;; selo verde aleatório (de 0 a 1)
+          if green-seal = "always" [
+            set sv 1
+          ]
+
+          if sv = 1 [
+            let x (item 0 (table:get posicao-parcelas (word "a" id "p" p)))
+            let y (item 1 (table:get posicao-parcelas (word "a" id "p" p)))
+
+            ;; coloca o selo verde na fazenda (interface)
+            bitmap:copy-to-drawing (bitmap:import selo-verde-imagem) x + 21 y
+            table:put parcelas (word "p" p "sv") true
+
+            ;; atualiza parcelas para o log
+            set parcelas-log (word parcelas-log (p + 1) " ")
+            set selo-verde true
+          ]
+        ]
+
+        set p p + 1
+      ]
+
+      if selo-verde [
+        print-log-selo-verde id (but-last parcelas-log)
+      ]
+    ]
+    if selo-verde [
+      print-log ""
     ]
   ]
 end
@@ -1572,6 +1626,23 @@ to paga-imposto
     let pr producao
     let imposto 10
     let faixa 0
+    let desconto 0
+
+    ;; calcula o desconto no imposto
+
+    let p 0
+    while [p < 6] [
+      let sv table:get parcelas (word "p" p "sv")
+
+      if sv [
+        ;; 5% de desconto para cada parcela com selo verde
+        set desconto desconto + 0.05 / 6
+      ]
+
+      set p p + 1
+    ]
+
+    set desconto 1 - desconto ;; calcula o desconto
 
     if pr > 0 and pr <= 200 [
       set imposto 0.1 * pr
@@ -1582,15 +1653,28 @@ to paga-imposto
       set faixa 30
     ]
 
+    set imposto precision (imposto * desconto) 2 ;; realiza o desconto no imposto
+
     set saldo precision (saldo - imposto) 2
     set total-imposto total-imposto + imposto
 
     let msg (word "Imposto do agricultor " id ": $" imposto)
+    let msg-com-explicacao (word msg " (" faixa "% do ganho de $" producao ")")
+    let desconto-total precision ( (1 - desconto) * 100 ) 2
+    let msg-desconto-total (word " (desconto total de " desconto-total"%)")
 
-    ifelse faixa = 0 [
-      print-log msg
+    ifelse desconto-total > 0 [
+      ifelse faixa = 0 [
+        print-log (word msg msg-desconto-total)
+      ][
+        print-log (word msg-com-explicacao msg-desconto-total)
+      ]
     ][
-      print-log (word msg " (" faixa "% do ganho de $" producao ")")
+      ifelse faixa = 0 [
+        print-log msg
+      ][
+        print-log msg-com-explicacao
+      ]
     ]
   ]
 
@@ -1892,6 +1976,10 @@ to print-log-aluguel-de-pulverizador [ identificador quantidade valor ]
   print-log (word "Agricultor " identificador " alugou " quantidade " pulverizador ($" valor ") por $" (quantidade * valor))
 end
 
+to print-log-selo-verde [ identificador parcelas-selo-verde]
+  print-log (word "Fiscal concedeu selo verde para agricultor " identificador " nas parcelas (" parcelas-selo-verde ")")
+end
+
 to move-prefeito [lista]
   let tam length lista
   let i  0
@@ -2007,10 +2095,10 @@ ticks
 30.0
 
 BUTTON
-27
-32
-90
-65
+21
+29
+84
+62
 NIL
 setup
 NIL
@@ -2024,10 +2112,10 @@ NIL
 1
 
 BUTTON
-97
-13
-172
-46
+91
+10
+166
+43
 go once
 go
 NIL
@@ -2041,10 +2129,10 @@ NIL
 1
 
 SLIDER
-19
-93
-191
-126
+20
+87
+183
+120
 number-farmer
 number-farmer
 1
@@ -2056,40 +2144,40 @@ NIL
 HORIZONTAL
 
 CHOOSER
-20
-186
-158
-231
+21
+174
+159
+219
 type-of-agrotoxic
 type-of-agrotoxic
 "random" "common" "premium" "super-premium" "no-agrotoxic"
-3
+0
 
 CHOOSER
-21
-285
-159
-330
+22
+273
+160
+318
 type-of-machine
 type-of-machine
 "random" "combination-1" "combination-2" "combination-3" "no-machine"
 4
 
 CHOOSER
-20
-236
-158
-281
+21
+224
+159
+269
 type-of-fertilizer
 type-of-fertilizer
 "random" "common" "premium" "super-premium" "no-fertilizer"
-3
+4
 
 CHOOSER
-19
-137
-157
-182
+20
+125
+158
+170
 type-of-seed
 type-of-seed
 "random" "vegetable" "rice" "soy"
@@ -2217,20 +2305,20 @@ businessman-machine-account-balance
 11
 
 CHOOSER
-21
-334
-159
-379
+22
+322
+160
+367
 use-of-pulverizer
 use-of-pulverizer
 "random" "always" "no-pulverizer"
 2
 
 SWITCH
-22
-430
-130
-463
+24
+468
+162
+501
 fine?
 fine?
 0
@@ -2286,9 +2374,9 @@ PENS
 
 SWITCH
 23
-521
+557
 199
-554
+590
 enable-agent-movement?
 enable-agent-movement?
 1
@@ -2350,44 +2438,44 @@ PENS
 "polution" 1.0 0 -16777216 true "" "plot global-pollution"
 
 CHOOSER
-22
-469
-199
-514
+23
+506
+182
+551
 type-of-pollution-treatment
 type-of-pollution-treatment
 "random" "water-treatment" "waste-treatment" "sewage-treatment" "no-treatment"
 2
 
 SWITCH
-22
-389
-177
-422
+23
+377
+184
+410
 use-all-farm-land?
 use-all-farm-land?
-0
+1
 1
 -1000
 
 TEXTBOX
-20
-604
-202
-649
+17
+703
+155
+753
 Open \"gorim-log.txt\" file in \".\\NetLogo-Gorim\" for simulation details.
 12
-0.0
+62.0
 1
 
 SWITCH
-24
-669
-156
-702
+26
+638
+158
+671
 set-farmer-0?
 set-farmer-0?
-1
+0
 1
 -1000
 
@@ -2400,7 +2488,7 @@ farmer-0-soy
 farmer-0-soy
 0
 6
-6.0
+0.0
 1
 1
 NIL
@@ -2415,7 +2503,7 @@ farmer-0-vegetable
 farmer-0-vegetable
 0
 6
-0.0
+6.0
 1
 1
 NIL
@@ -2475,7 +2563,7 @@ farmer-0-super-premium-agrotoxic
 farmer-0-super-premium-agrotoxic
 0
 6
-6.0
+0.0
 1
 1
 NIL
@@ -2520,7 +2608,7 @@ farmer-0-super-premium-fertilizer
 farmer-0-super-premium-fertilizer
 0
 6
-6.0
+0.0
 1
 1
 NIL
@@ -2587,10 +2675,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-97
-51
-187
-84
+91
+48
+181
+81
 go forever
 go
 T
@@ -2605,9 +2693,9 @@ NIL
 
 SLIDER
 23
-558
-198
-591
+594
+199
+627
 agent-movement-speed
 agent-movement-speed
 1
@@ -2617,6 +2705,16 @@ agent-movement-speed
 1
 NIL
 HORIZONTAL
+
+CHOOSER
+24
+419
+162
+464
+green-seal
+green-seal
+"random" "always" "no-green-seal"
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
