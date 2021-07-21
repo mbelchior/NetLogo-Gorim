@@ -19,7 +19,7 @@ prefeitos-own [ saldo ]
 
 globals [ global-pollution simulation-round posicao-inicial posicao-parcelas tipos-semente tipos-agrotoxico tipos-fertilizante tipos-maquina setores
   sementes-imagens agrotoxico-imagens fertilizante-imagens maquina-imagens selo-verde-imagem
-  tabela-produtividade tabela-poluicao-agricultor tabela-poluicao-empresario
+  tabela-produtividade tabela-poluicao-agricultor tabela-poluicao-empresario tabela-poluicao-produtividade
   tipos-multa reducao-poluicao medida-prevencao
   caminho-prefeito caminho-fiscal-to-farmers caminho-fiscal-to-businessman
   caminho-agricultores-para-empresario-semente caminho-agricultores-para-empresario-agrotoxico caminho-agricultores-para-empresario-fertilizante
@@ -300,6 +300,19 @@ to setup-inicial
   table:put tabela-poluicao-empresario "m2" 9 ;; empresario maquina pacote-maquina 3
   table:put tabela-poluicao-empresario "m3" 40 ;; empresario maquina pulverizador
 
+  ;; define a tabela de poluição por produtividade
+  set tabela-poluicao-produtividade table:make
+  table:put tabela-poluicao-produtividade 0 100 ;; [0 29] 100
+  table:put tabela-poluicao-produtividade 10 100 ;; [0 29] 100
+  table:put tabela-poluicao-produtividade 20 100 ;; [0 29] 100
+  table:put tabela-poluicao-produtividade 30 90 ;; [30 39] 90
+  table:put tabela-poluicao-produtividade 40 80 ;; [40 49] 80
+  table:put tabela-poluicao-produtividade 50 70 ;; [50 59] 70
+  table:put tabela-poluicao-produtividade 60 60 ;; [60 69] 60
+  table:put tabela-poluicao-produtividade 70 40 ;; [70 79] 40
+  table:put tabela-poluicao-produtividade 80 20 ;; [80 99] 20
+  table:put tabela-poluicao-produtividade 90 20 ;; [80 99] 20
+  table:put tabela-poluicao-produtividade 100 0 ;; [100 100] 0
 end
 
 to cria-area
@@ -557,7 +570,7 @@ to go
   compra-venda-produtos ;; agricultor e empresarios
 
   print-log-saldo-agricultores
-  print-log-producao-empresarios
+  atualiza-producao-empresarios-pela-poluicao-global-e-print-log
 
   atualiza-poluicao-empresarios ;; empresário: após a venda/aluguel de produtos
   print-log-poluicao-empresarios
@@ -567,9 +580,10 @@ to go
   planta ;; agricultor
 
   atualiza-producao-agricultores ;; agricultor: após a plantação
+
   atualiza-poluicao-agricultores ;;  agricultor: após a plantação
 
-  print-log-producao-agricultores
+  atualiza-producao-agricultores-pela-poluicao-global-e-print-log
   print-log-poluicao-agricultores
 
   print-log "ETAPA 2\n"
@@ -834,6 +848,19 @@ to empresario-realiza-venda [setor-empr quant-produto produto]
     ;; valor do produto não pode alterar
     table:put produtos produto (list valor-produto (quant-produtos + quant-produto))
   ]
+end
+
+to-report get-produtividade-poluicao
+  let pg global-pollution
+  if pg < 0 [
+    report 100
+  ]
+  if pg > 100 [
+    report 0
+  ]
+
+  set pg (floor (pg / 10)) * 10
+  report table:get tabela-poluicao-produtividade pg
 end
 
 to compra-agrotoxico
@@ -1568,7 +1595,7 @@ to fiscaliza
         set total-multas total-multas + multa
 
         if tipo-multa != 0 [
-          print-log (word "Multa (" (item tipo-multa tipos-multa) ") para agricultor " id " no valor de $"
+          print-log (word "Multa (" (item tipo-multa tipos-multa) ") para agricultor " id " no valor de D$"
             multa " (" peso " * " p ")" )
         ]
       ]
@@ -1600,7 +1627,7 @@ to fiscaliza
 
         if tipo-multa != 0 [
           print-log (word "Multa (" (item tipo-multa tipos-multa) ") para empresário de " (table:get setores setor)
-            " no valor de $" multa " (" peso " * " p ")" )
+            " no valor de D$" multa " (" peso " * " p ")" )
         ]
       ]
     ]
@@ -1658,8 +1685,8 @@ to paga-imposto
     set saldo precision (saldo - imposto) 2
     set total-imposto total-imposto + imposto
 
-    let msg (word "Imposto do agricultor " id ": $" imposto)
-    let msg-com-explicacao (word msg " (" faixa "% do ganho de $" producao ")")
+    let msg (word "Imposto do agricultor " id ": D$" imposto)
+    let msg-com-explicacao (word msg " (" faixa "% do ganho de D$" producao ")")
     let desconto-total precision ( (1 - desconto) * 100 ) 2
     let msg-desconto-total (word " (desconto total de " desconto-total"%)")
 
@@ -1697,12 +1724,12 @@ to paga-imposto
     set saldo precision (saldo - imposto) 2
     set total-imposto total-imposto + imposto
 
-    let msg (word "Imposto do empresario de " (table:get setores setor) ": $" imposto)
+    let msg (word "Imposto do empresario de " (table:get setores setor) ": D$" imposto)
 
     ifelse faixa = 0 [
       print-log msg
     ][
-      print-log (word msg " (" faixa "% do ganho de $" producao ")")
+      print-log (word msg " (" faixa "% do ganho de D$" producao ")")
     ]
   ]
 
@@ -1882,7 +1909,7 @@ end
 to print-log-saldo-agricultores
   print-log ""
   ask agricultores [
-    print-log (word "Saldo atual do agricultor " id ": $" saldo)
+    print-log (word "Saldo atual do agricultor " id ": D$" saldo)
   ]
   print-log ""
 end
@@ -1890,7 +1917,7 @@ end
 to print-log-saldo-prefeito
   ;;print-log ""
   ask prefeitos [
-    print-log (word "Saldo atual da prefeitura: $" saldo)
+    print-log (word "Saldo atual da prefeitura: D$" saldo)
   ]
   print-log ""
 end
@@ -1898,38 +1925,50 @@ end
 to print-log-saldo
   ;; print-log ""
   ask agricultores [
-    print-log (word "Saldo atual do agricultor " id ": $" saldo)
+    print-log (word "Saldo atual do agricultor " id ": D$" saldo)
   ]
   print-log ""
   ask empresarios [
-    print-log (word "Saldo atual do empresário de "  (table:get setores setor) ": $" saldo)
+    print-log (word "Saldo atual do empresário de "  (table:get setores setor) ": D$" saldo)
   ]
   print-log ""
   ask prefeitos [
-    print-log (word "Saldo atual da prefeitura: $" saldo)
+    print-log (word "Saldo atual da prefeitura: D$" saldo)
   ]
   print-log ""
 end
 
-to print-log-producao-agricultores
+to print-log-producao-agricultores [producao-sem-reducao producao-com-reducao reducao-produtividade]
+  print-log (word "Ganhos do agricultor " id ": D$" producao-com-reducao " (" reducao-produtividade "% de D$" producao-sem-reducao ")")
+end
+
+to atualiza-producao-agricultores-pela-poluicao-global-e-print-log
   print-log ""
+  let reducao-produtividade get-produtividade-poluicao
   ask agricultores [
-    if producao > 0 [
-      print-log (word "Ganhos do agricultor " id ": $" producao)
-    ]
+    let producao-sem-reducao producao
+    set producao producao * (reducao-produtividade / 100)
+    print-log-producao-agricultores producao-sem-reducao producao reducao-produtividade
   ]
   print-log ""
 end
 
-to print-log-producao-empresarios
-  ;; print-log ""
+to print-log-producao-empresarios [setor-empresario producao-sem-reducao producao-com-reducao reducao-produtividade]
+  print-log (word "Ganhos do empresário de "  (table:get setores setor-empresario) ": D$" producao-com-reducao " (" reducao-produtividade "% de D$" producao-sem-reducao ")")
+end
+
+to atualiza-producao-empresarios-pela-poluicao-global-e-print-log
+  ;;print-log ""
+  let reducao-produtividade get-produtividade-poluicao
   ask empresarios [
-    if producao > 0 [
-      print-log (word "Ganhos do empresário de "  (table:get setores setor) ": $" producao)
-    ]
+    let producao-sem-reducao producao
+    set producao producao * (reducao-produtividade / 100)
+    print-log-producao-empresarios setor producao-sem-reducao producao reducao-produtividade
   ]
   print-log ""
 end
+
+
 
 to print-log-poluicao-agricultores
   ;; print-log ""
@@ -1955,25 +1994,25 @@ to print-log-poluicao-global
 end
 
 to print-log-compra-de-semente [ identificador quantidade semente valor ]
-  ;; print-log (word "Agricultor " id " comprou " p " saco(s) de " (item s tipos-semente) " ($" valor-sem ")" " por $" (p * valor-sem))
-  print-log (word "Agricultor " identificador " comprou " quantidade " saco(s) de " (item semente tipos-semente) " ($" valor ")" " por $" (quantidade * valor))
+  ;; print-log (word "Agricultor " id " comprou " p " saco(s) de " (item s tipos-semente) " (D$" valor-sem ")" " por D$" (p * valor-sem))
+  print-log (word "Agricultor " identificador " comprou " quantidade " saco(s) de " (item semente tipos-semente) " (D$" valor ")" " por D$" (quantidade * valor))
 end
 
 to print-log-compra-de-agrotoxico [ identificador quantidade agrotoxico valor ]
-  ;; print-log (word "Agricultor " id " comprou " p " agrotóxico(s) " (item a tipos-agrotoxico) " ($" valor-agro ")" " por $" (p * valor-agro))
-  print-log (word "Agricultor " identificador " comprou " quantidade " agrotóxico(s) " (item agrotoxico tipos-agrotoxico) " ($" valor ") por $" (quantidade * valor))
+  ;; print-log (word "Agricultor " id " comprou " p " agrotóxico(s) " (item a tipos-agrotoxico) " (D$" valor-agro ")" " por D$" (p * valor-agro))
+  print-log (word "Agricultor " identificador " comprou " quantidade " agrotóxico(s) " (item agrotoxico tipos-agrotoxico) " (D$" valor ") por D$" (quantidade * valor))
 end
 
 to print-log-compra-de-fertilizante [ identificador quantidade fertilizante valor ]
-  print-log (word "Agricultor " identificador " comprou " quantidade " fertilizante(s) " (item fertilizante tipos-fertilizante) " ($" valor ") por $" (quantidade * valor))
+  print-log (word "Agricultor " identificador " comprou " quantidade " fertilizante(s) " (item fertilizante tipos-fertilizante) " (D$" valor ") por D$" (quantidade * valor))
 end
 
 to print-log-aluguel-de-maquina [ identificador quantidade maquina valor ]
-  print-log (word "Agricultor " identificador " alugou " quantidade " pacote(s) de máquinas \n\t\t(" (item maquina tipos-maquina) ") ($" valor ") por $" (quantidade * valor))
+  print-log (word "Agricultor " identificador " alugou " quantidade " pacote(s) de máquinas \n\t\t(" (item maquina tipos-maquina) ") (D$" valor ") por D$" (quantidade * valor))
 end
 
 to print-log-aluguel-de-pulverizador [ identificador quantidade valor ]
-  print-log (word "Agricultor " identificador " alugou " quantidade " pulverizador ($" valor ") por $" (quantidade * valor))
+  print-log (word "Agricultor " identificador " alugou " quantidade " pulverizador (D$" valor ") por D$" (quantidade * valor))
 end
 
 to print-log-selo-verde [ identificador parcelas-selo-verde]
@@ -2096,9 +2135,9 @@ ticks
 
 BUTTON
 21
-29
-84
-62
+28
+85
+61
 NIL
 setup
 NIL
@@ -2114,7 +2153,7 @@ NIL
 BUTTON
 91
 10
-166
+182
 43
 go once
 go
@@ -2137,7 +2176,7 @@ number-farmer
 number-farmer
 1
 6
-1.0
+3.0
 1
 1
 NIL
@@ -2151,7 +2190,7 @@ CHOOSER
 type-of-agrotoxic
 type-of-agrotoxic
 "random" "common" "premium" "super-premium" "no-agrotoxic"
-0
+3
 
 CHOOSER
 22
@@ -2445,7 +2484,7 @@ CHOOSER
 type-of-pollution-treatment
 type-of-pollution-treatment
 "random" "water-treatment" "waste-treatment" "sewage-treatment" "no-treatment"
-2
+4
 
 SWITCH
 23
@@ -2454,7 +2493,7 @@ SWITCH
 410
 use-all-farm-land?
 use-all-farm-land?
-1
+0
 1
 -1000
 
@@ -2503,7 +2542,7 @@ farmer-0-vegetable
 farmer-0-vegetable
 0
 6
-6.0
+0.0
 1
 1
 NIL
@@ -2677,7 +2716,7 @@ HORIZONTAL
 BUTTON
 91
 48
-181
+183
 81
 go forever
 go
