@@ -1721,6 +1721,7 @@ to paga-imposto
       set faixa 30
     ]
 
+    set imposto precision ( imposto ) 2
     set saldo precision (saldo - imposto) 2
     set total-imposto total-imposto + imposto
 
@@ -1860,21 +1861,21 @@ to aplica-medidas-prevencao-poluicao
       ]
 
       if t = 0 [
-        ifelse global-pollution <= 20 [
+        ifelse global-pollution < 30 [
           set custo 800
         ][
           set custo global-pollution - 20 + 800
         ]
       ]
       if t = 1 [
-        ifelse global-pollution <= 20 [
+        ifelse global-pollution < 30 [
           set custo 1600
         ][
           set custo global-pollution - 20 + 1600
         ]
       ]
       if t = 2 [
-        ifelse global-pollution <= 20 [
+        ifelse global-pollution < 30 [
           set custo 2400
         ][
           set custo global-pollution - 20 + 2400
@@ -2016,7 +2017,7 @@ to print-log-aluguel-de-pulverizador [ identificador quantidade valor ]
 end
 
 to print-log-selo-verde [ identificador parcelas-selo-verde]
-  print-log (word "Fiscal concedeu selo verde para agricultor " identificador " nas parcelas (" parcelas-selo-verde ")")
+  print-log (word "Fiscal concedeu selo verde para agricultor " identificador " na(s) parcela(s) (" parcelas-selo-verde ")")
 end
 
 to move-prefeito [lista]
@@ -2176,7 +2177,7 @@ number-farmer
 number-farmer
 1
 6
-3.0
+1.0
 1
 1
 NIL
@@ -2210,7 +2211,7 @@ CHOOSER
 type-of-fertilizer
 type-of-fertilizer
 "random" "common" "premium" "super-premium" "no-fertilizer"
-4
+3
 
 CHOOSER
 20
@@ -2514,7 +2515,7 @@ SWITCH
 671
 set-farmer-0?
 set-farmer-0?
-0
+1
 1
 -1000
 
@@ -2527,7 +2528,7 @@ farmer-0-soy
 farmer-0-soy
 0
 6
-0.0
+2.0
 1
 1
 NIL
@@ -2602,7 +2603,7 @@ farmer-0-super-premium-agrotoxic
 farmer-0-super-premium-agrotoxic
 0
 6
-0.0
+1.0
 1
 1
 NIL
@@ -2647,7 +2648,7 @@ farmer-0-super-premium-fertilizer
 farmer-0-super-premium-fertilizer
 0
 6
-0.0
+2.0
 1
 1
 NIL
@@ -2707,7 +2708,7 @@ farmer-0-pulverizer
 farmer-0-pulverizer
 0
 6
-0.0
+1.0
 1
 1
 NIL
@@ -2753,7 +2754,7 @@ CHOOSER
 green-seal
 green-seal
 "random" "always" "no-green-seal"
-1
+2
 
 @#$#@#$#@
 ## WHAT IS IT?
