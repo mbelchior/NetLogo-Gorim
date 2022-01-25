@@ -592,7 +592,7 @@ to go
 
   fiscaliza ;; fiscal
 
-  paga-imposto ;; agricultor e empresarios
+  paga-imposto ;; agricultor e empresarios e atualiza o saldo do prefeito
 
   atualiza-saldo-agricultores ;; agricultor: após pagar os impostos, possíveis multas
   atualiza-saldo-empresarios ;; empresarios: após pagar os impostos, possíveis multas
@@ -2224,7 +2224,7 @@ CHOOSER
 type-of-agrotoxic
 type-of-agrotoxic
 "random" "common" "premium" "super-premium" "no-agrotoxic"
-4
+3
 
 CHOOSER
 22
@@ -2254,7 +2254,7 @@ CHOOSER
 type-of-seed
 type-of-seed
 "random" "vegetable" "rice" "soy"
-1
+3
 
 MONITOR
 852
@@ -2518,7 +2518,7 @@ CHOOSER
 type-of-pollution-treatment
 type-of-pollution-treatment
 "random" "water-treatment" "waste-treatment" "sewage-treatment" "no-treatment"
-4
+3
 
 SWITCH
 23
@@ -2527,7 +2527,7 @@ SWITCH
 410
 use-all-farm-land?
 use-all-farm-land?
-0
+1
 1
 -1000
 
@@ -2561,7 +2561,7 @@ farmer-0-soy
 farmer-0-soy
 0
 6
-1.0
+2.0
 1
 1
 NIL
@@ -2576,7 +2576,7 @@ farmer-0-vegetable
 farmer-0-vegetable
 0
 6
-0.0
+2.0
 1
 1
 NIL
@@ -2591,7 +2591,7 @@ farmer-0-rice
 farmer-0-rice
 0
 6
-0.0
+2.0
 1
 1
 NIL
@@ -2606,7 +2606,7 @@ farmer-0-common-agrotoxic
 farmer-0-common-agrotoxic
 0
 6
-0.0
+2.0
 1
 1
 NIL
@@ -2621,7 +2621,7 @@ farmer-0-premium-agrotoxic
 farmer-0-premium-agrotoxic
 0
 6
-0.0
+2.0
 1
 1
 NIL
@@ -2636,7 +2636,7 @@ farmer-0-super-premium-agrotoxic
 farmer-0-super-premium-agrotoxic
 0
 6
-0.0
+1.0
 1
 1
 NIL
@@ -2651,7 +2651,7 @@ farmer-0-common-fertilizer
 farmer-0-common-fertilizer
 0
 6
-0.0
+2.0
 1
 1
 NIL
@@ -2666,7 +2666,7 @@ farmer-0-premium-fertilizer
 farmer-0-premium-fertilizer
 0
 6
-0.0
+2.0
 1
 1
 NIL
@@ -2681,7 +2681,7 @@ farmer-0-super-premium-fertilizer
 farmer-0-super-premium-fertilizer
 0
 6
-0.0
+2.0
 1
 1
 NIL
@@ -2726,7 +2726,7 @@ farmer-0-combination-3-machine
 farmer-0-combination-3-machine
 0
 6
-0.0
+1.0
 1
 1
 NIL
@@ -2741,7 +2741,7 @@ farmer-0-pulverizer
 farmer-0-pulverizer
 0
 6
-0.0
+1.0
 1
 1
 NIL
@@ -2787,7 +2787,7 @@ CHOOSER
 green-seal
 green-seal
 "random" "always" "no-green-seal"
-2
+0
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -7459,6 +7459,946 @@ NetLogo 6.1.0
     </enumeratedValueSet>
     <enumeratedValueSet variable="type-of-fertilizer">
       <value value="&quot;super-premium&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-machine">
+      <value value="&quot;no-machine&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-pollution-treatment">
+      <value value="&quot;no-treatment&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-of-pulverizer">
+      <value value="&quot;no-pulverizer&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="fine?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="green-seal">
+      <value value="&quot;no-green-seal&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-all-farm-land?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="enable-agent-movement?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="agent-movement-speed">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="set-farmer-0?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-2-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-super-premium-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-premium-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-vegetable">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-common-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-premium-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-1-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-common-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-3-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-pulverizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-super-premium-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-rice">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-soy">
+      <value value="0"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="Experiment GORIM - Saldo, 1 P, S SOY, F SP, M 3, Selo Verde" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="50"/>
+    <metric>first [saldo] of agricultores</metric>
+    <enumeratedValueSet variable="number-farmer">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-seed">
+      <value value="&quot;soy&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-agrotoxic">
+      <value value="&quot;no-agrotoxic&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-fertilizer">
+      <value value="&quot;no-fertilizer&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-machine">
+      <value value="&quot;no-machine&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-pollution-treatment">
+      <value value="&quot;no-treatment&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-of-pulverizer">
+      <value value="&quot;no-pulverizer&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="fine?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="green-seal">
+      <value value="&quot;always&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-all-farm-land?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="enable-agent-movement?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="agent-movement-speed">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="set-farmer-0?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-vegetable">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-rice">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-soy">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-common-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-premium-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-super-premium-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-common-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-premium-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-super-premium-fertilizer">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-1-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-2-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-3-machine">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-pulverizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="Experiment GORIM - Saldo, S SOY, A C P SP, F 0" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="50"/>
+    <metric>first [saldo] of agricultores</metric>
+    <enumeratedValueSet variable="number-farmer">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-seed">
+      <value value="&quot;soy&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-agrotoxic">
+      <value value="&quot;common&quot;"/>
+      <value value="&quot;premium&quot;"/>
+      <value value="&quot;super-premium&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-fertilizer">
+      <value value="&quot;no-fertilizer&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-machine">
+      <value value="&quot;no-machine&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-pollution-treatment">
+      <value value="&quot;no-treatment&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-of-pulverizer">
+      <value value="&quot;no-pulverizer&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="fine?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="green-seal">
+      <value value="&quot;no-green-seal&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-all-farm-land?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="enable-agent-movement?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="agent-movement-speed">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="set-farmer-0?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-2-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-super-premium-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-premium-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-vegetable">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-common-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-premium-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-1-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-common-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-3-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-pulverizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-super-premium-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-rice">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-soy">
+      <value value="0"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="Experiment GORIM - Saldo, S SOY, A R, F 0" repetitions="100" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="50"/>
+    <metric>first [saldo] of agricultores</metric>
+    <enumeratedValueSet variable="number-farmer">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-seed">
+      <value value="&quot;soy&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-agrotoxic">
+      <value value="&quot;random&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-fertilizer">
+      <value value="&quot;no-fertilizer&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-machine">
+      <value value="&quot;no-machine&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-pollution-treatment">
+      <value value="&quot;no-treatment&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-of-pulverizer">
+      <value value="&quot;no-pulverizer&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="fine?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="green-seal">
+      <value value="&quot;no-green-seal&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-all-farm-land?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="enable-agent-movement?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="agent-movement-speed">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="set-farmer-0?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-2-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-super-premium-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-premium-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-vegetable">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-common-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-premium-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-1-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-common-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-3-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-pulverizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-super-premium-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-rice">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-soy">
+      <value value="0"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="Experiment GORIM - Produção, S SOY, A C P SP, F 0" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="50"/>
+    <metric>first [producao] of agricultores</metric>
+    <enumeratedValueSet variable="number-farmer">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-seed">
+      <value value="&quot;soy&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-agrotoxic">
+      <value value="&quot;common&quot;"/>
+      <value value="&quot;premium&quot;"/>
+      <value value="&quot;super-premium&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-fertilizer">
+      <value value="&quot;no-fertilizer&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-machine">
+      <value value="&quot;no-machine&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-pollution-treatment">
+      <value value="&quot;no-treatment&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-of-pulverizer">
+      <value value="&quot;no-pulverizer&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="fine?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="green-seal">
+      <value value="&quot;no-green-seal&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-all-farm-land?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="enable-agent-movement?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="agent-movement-speed">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="set-farmer-0?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-2-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-super-premium-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-premium-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-vegetable">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-common-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-premium-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-1-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-common-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-3-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-pulverizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-super-premium-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-rice">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-soy">
+      <value value="0"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="Experiment GORIM - Produção, S SOY, A R, F 0" repetitions="100" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="50"/>
+    <metric>first [producao] of agricultores</metric>
+    <enumeratedValueSet variable="number-farmer">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-seed">
+      <value value="&quot;soy&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-agrotoxic">
+      <value value="&quot;random&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-fertilizer">
+      <value value="&quot;no-fertilizer&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-machine">
+      <value value="&quot;no-machine&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-pollution-treatment">
+      <value value="&quot;no-treatment&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-of-pulverizer">
+      <value value="&quot;no-pulverizer&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="fine?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="green-seal">
+      <value value="&quot;no-green-seal&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-all-farm-land?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="enable-agent-movement?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="agent-movement-speed">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="set-farmer-0?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-2-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-super-premium-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-premium-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-vegetable">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-common-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-premium-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-1-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-common-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-3-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-pulverizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-super-premium-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-rice">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-soy">
+      <value value="0"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="Experiment GORIM - S Hort, A C P SP, F SP" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="50"/>
+    <metric>global-pollution</metric>
+    <enumeratedValueSet variable="number-farmer">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-seed">
+      <value value="&quot;vegetable&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-agrotoxic">
+      <value value="&quot;common&quot;"/>
+      <value value="&quot;premium&quot;"/>
+      <value value="&quot;super-premium&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-fertilizer">
+      <value value="&quot;super-premium&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-machine">
+      <value value="&quot;no-machine&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-pollution-treatment">
+      <value value="&quot;no-treatment&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-of-pulverizer">
+      <value value="&quot;no-pulverizer&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="fine?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="green-seal">
+      <value value="&quot;no-green-seal&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-all-farm-land?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="enable-agent-movement?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="agent-movement-speed">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="set-farmer-0?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-2-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-super-premium-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-premium-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-vegetable">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-common-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-premium-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-1-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-common-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-3-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-pulverizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-super-premium-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-rice">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-soy">
+      <value value="0"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="Experiment GORIM - S Hort, A C P SP, F P" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="50"/>
+    <metric>global-pollution</metric>
+    <enumeratedValueSet variable="number-farmer">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-seed">
+      <value value="&quot;vegetable&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-agrotoxic">
+      <value value="&quot;common&quot;"/>
+      <value value="&quot;premium&quot;"/>
+      <value value="&quot;super-premium&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-fertilizer">
+      <value value="&quot;premium&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-machine">
+      <value value="&quot;no-machine&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-pollution-treatment">
+      <value value="&quot;no-treatment&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-of-pulverizer">
+      <value value="&quot;no-pulverizer&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="fine?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="green-seal">
+      <value value="&quot;no-green-seal&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-all-farm-land?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="enable-agent-movement?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="agent-movement-speed">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="set-farmer-0?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-2-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-super-premium-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-premium-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-vegetable">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-common-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-premium-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-1-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-common-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-3-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-pulverizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-super-premium-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-rice">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-soy">
+      <value value="0"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="Experiment GORIM - S Hort, A C P SP, F C" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="50"/>
+    <metric>global-pollution</metric>
+    <enumeratedValueSet variable="number-farmer">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-seed">
+      <value value="&quot;vegetable&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-agrotoxic">
+      <value value="&quot;common&quot;"/>
+      <value value="&quot;premium&quot;"/>
+      <value value="&quot;super-premium&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-fertilizer">
+      <value value="&quot;common&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-machine">
+      <value value="&quot;no-machine&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-pollution-treatment">
+      <value value="&quot;no-treatment&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-of-pulverizer">
+      <value value="&quot;no-pulverizer&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="fine?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="green-seal">
+      <value value="&quot;no-green-seal&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-all-farm-land?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="enable-agent-movement?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="agent-movement-speed">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="set-farmer-0?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-2-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-super-premium-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-premium-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-vegetable">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-common-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-premium-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-1-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-common-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-3-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-pulverizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-super-premium-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-rice">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-soy">
+      <value value="0"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="Experiment GORIM - S Arroz, A C P SP, F SP" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="50"/>
+    <metric>global-pollution</metric>
+    <enumeratedValueSet variable="number-farmer">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-seed">
+      <value value="&quot;rice&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-agrotoxic">
+      <value value="&quot;common&quot;"/>
+      <value value="&quot;premium&quot;"/>
+      <value value="&quot;super-premium&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-fertilizer">
+      <value value="&quot;super-premium&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-machine">
+      <value value="&quot;no-machine&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-pollution-treatment">
+      <value value="&quot;no-treatment&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-of-pulverizer">
+      <value value="&quot;no-pulverizer&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="fine?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="green-seal">
+      <value value="&quot;no-green-seal&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-all-farm-land?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="enable-agent-movement?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="agent-movement-speed">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="set-farmer-0?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-2-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-super-premium-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-premium-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-vegetable">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-common-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-premium-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-1-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-common-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-3-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-pulverizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-super-premium-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-rice">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-soy">
+      <value value="0"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="Experiment GORIM - S Arroz, A C P SP, F P" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="50"/>
+    <metric>global-pollution</metric>
+    <enumeratedValueSet variable="number-farmer">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-seed">
+      <value value="&quot;rice&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-agrotoxic">
+      <value value="&quot;common&quot;"/>
+      <value value="&quot;premium&quot;"/>
+      <value value="&quot;super-premium&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-fertilizer">
+      <value value="&quot;premium&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-machine">
+      <value value="&quot;no-machine&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-pollution-treatment">
+      <value value="&quot;no-treatment&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-of-pulverizer">
+      <value value="&quot;no-pulverizer&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="fine?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="green-seal">
+      <value value="&quot;no-green-seal&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="use-all-farm-land?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="enable-agent-movement?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="agent-movement-speed">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="set-farmer-0?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-2-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-super-premium-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-premium-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-vegetable">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-common-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-premium-agrotoxic">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-1-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-common-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-combination-3-machine">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-pulverizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-super-premium-fertilizer">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-rice">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="farmer-0-soy">
+      <value value="0"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="Experiment GORIM - S Arroz, A C P SP, F C" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="50"/>
+    <metric>global-pollution</metric>
+    <enumeratedValueSet variable="number-farmer">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-seed">
+      <value value="&quot;rice&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-agrotoxic">
+      <value value="&quot;common&quot;"/>
+      <value value="&quot;premium&quot;"/>
+      <value value="&quot;super-premium&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="type-of-fertilizer">
+      <value value="&quot;common&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="type-of-machine">
       <value value="&quot;no-machine&quot;"/>
